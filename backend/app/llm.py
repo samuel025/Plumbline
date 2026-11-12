@@ -1,9 +1,10 @@
 """LLM wrapper: Gemini (GEMINI_API_KEY) or Anthropic (ANTHROPIC_API_KEY).
 Any failure raises LLMUnavailable; the pipeline then routes the item to a pastor."""
-import json, os, re
+import json, os, re, time
 import httpx
 
-GEMINI_MODEL = os.environ.get("PLUMBLINE_GEMINI_MODEL", "gemini-2.5-flash")
+# Tried in order; a model that stays rate-limited or unavailable falls through to the next.
+GEMINI_MODELS = os.environ.get("PLUMBLINE_GEMINI_MODEL", "gemini-3.5-flash-lite,gemini-3.8-flash,gemini-2.5-flash").split(",")
 ANTHROPIC_MODEL = os.environ.get("PLUMBLINE_MODEL", "claude-sonnet-5-5")
 
 def _load_env():
@@ -28,16 +29,29 @@ def _parse(text: str) -> dict:
     return json.loads(m.group(0) if m else text)
 
 def _gemini(key: str, system: str, user: str, max_tokens: int) -> dict:
-    r = httpx.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+    last = None
+    for model in GEMINI_MODELS:
+        for attempt in range(3):
+            r = _post(key, model, system, user, max_tokens)
+            if r.status_code not in (429, 503):
+                break
+            time.sleep(float(r.headers.get("retry-after", 0)) or min(10 * 2 ** attempt, 40))
+        if r.status_code in (404, 429, 503):  # unknown model or still limited: next model
+            last = r
+            continue
+        r.raise_for_status()
+        return _parse(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+    last.raise_for_status()
+
+def _post(key, model, system, user, max_tokens):
+    return httpx.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         headers={"x-goog-api-key": key},
         json={"systemInstruction": {"parts": [{"text": system}]},
               "contents": [{"role": "user", "parts": [{"text": user}]}],
               "generationConfig": {"responseMimeType": "application/json", "temperature": 0,
                                    "maxOutputTokens": max_tokens}},
         timeout=60)
-    r.raise_for_status()
-    return _parse(r.json()["candidates"][0]["content"]["parts"][0]["text"])
 
 def _anthropic(key: str, system: str, user: str, max_tokens: int) -> dict:
     import anthropic
