@@ -132,10 +132,21 @@ def _detail(c, sid: int):
     vd = dict(v) if v else {}
     if vd.get("reasons"):
         vd["reasons"] = json.loads(vd["reasons"])
+    vd["flags"] = json.loads(vd["flags"]) if vd.get("flags") else []
     return {"submission": dict(sub), "verdict": vd, "claims": claims,
             "loose_scripture": [x for x in scripture if x["claim_id"] is None],
             "loose_findings": [x for x in findings if x["claim_id"] is None],
             "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."}
+
+@app.post("/api/submissions/{sid}/recheck")
+def recheck(sid: int):
+    """Run the whole pipeline again on the same text (e.g. after the model was unavailable). Replaces the old result."""
+    with db.session() as c:
+        if not c.execute("SELECT 1 FROM submission WHERE id=?", (sid,)).fetchone():
+            raise HTTPException(404)
+        db.audit(c, "pastor", "recheck", f"submission:{sid}")
+    r = pipeline.run(sid)
+    return {"submission_id": sid, "status": r["status"]}
 
 @app.get("/api/submissions/{sid}")
 def submission_detail(sid: int):

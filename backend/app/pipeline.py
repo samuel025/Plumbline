@@ -1,6 +1,6 @@
 import json, re
 from . import bible, db, llm
-from .verdict import decide
+from .verdict import decide_full
 
 EXTRACT_SYS = """You split church-related text into checkable claims. Return ONLY JSON:
 {"claims":[{"text":str,"kind":"doctrinal|scriptural|pastoral_advice|factual",
@@ -44,7 +44,7 @@ def run(submission_id: int) -> dict:
         commitments = db.rows(c.execute("SELECT * FROM commitment WHERE church_id=? AND status='approved'", (church["id"],)))
         rulings = db.rows(c.execute("SELECT * FROM ruling WHERE church_id=?", (church["id"],)))
     text = sub["raw_text"]
-    llm_ok, claims, findings, scripture, pastor_auth = True, [], [], [], False
+    llm_ok, claims, findings, scripture, pastor_auth, llm_error = True, [], [], [], False, ""
     try:
         ex = llm.call_json(EXTRACT_SYS, text)
         claims = ex.get("claims", [])
@@ -52,8 +52,8 @@ def run(submission_id: int) -> dict:
         if claims and commitments:
             numbered = "\n".join(f"{i}. [{cl['kind']}] {cl['text']}" for i, cl in enumerate(claims))
             findings = llm.call_json(judge_system(church, commitments, rulings), numbered).get("findings", [])
-    except llm.LLMUnavailable:
-        llm_ok = False
+    except llm.LLMUnavailable as e:
+        llm_ok, llm_error = False, str(e)
     # Deterministic Scripture check: LLM-extracted claims plus any reference found in the raw text.
     seen = set()
     for i, cl in enumerate(claims):
@@ -74,10 +74,17 @@ def run(submission_id: int) -> dict:
         if cl["kind"] in ("doctrinal", "pastoral_advice") and i not in judged and llm_ok:
             findings.append({"claim_index": i, "commitment_id": None, "label": "silent", "confidence": 0.0,
                              "evidence": cl["text"], "suggested_fix": None})
-    status, reasons = decide(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth)
+    status, reasons, flags = decide_full(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth,
+                                         {c["id"]: c["text"] for c in commitments}, llm_error)
     with db.session() as c:
+        # a re-check replaces the previous run's results instead of piling on top of them
+        old = "claim_id IN (SELECT id FROM claim WHERE submission_id=?)"
+        c.execute(f"DELETE FROM scripture_check WHERE submission_id=? OR {old}", (submission_id, submission_id))
+        c.execute(f"DELETE FROM finding WHERE submission_id=? OR {old}", (submission_id, submission_id))
+        c.execute("DELETE FROM claim WHERE submission_id=?", (submission_id,))
         c.execute("DELETE FROM verdict WHERE submission_id=?", (submission_id,))
-        c.execute("INSERT INTO verdict(submission_id,status,reasons) VALUES(?,?,?)", (submission_id, status, json.dumps(reasons)))
+        c.execute("INSERT INTO verdict(submission_id,status,reasons,flags) VALUES(?,?,?,?)",
+                  (submission_id, status, json.dumps(reasons), json.dumps(flags)))
         for i, cl in enumerate(claims):
             cur = c.execute("INSERT INTO claim(submission_id,text,kind,risk) VALUES(?,?,?,?)",
                             (submission_id, cl["text"], cl["kind"], cl.get("risk", "none")))
@@ -93,6 +100,6 @@ def run(submission_id: int) -> dict:
             c.execute("INSERT INTO finding(submission_id,claim_id,commitment_id,label,confidence,evidence,suggested_fix) VALUES(?,?,?,?,?,?,?)",
                       (submission_id, cid, f.get("commitment_id"), f["label"], f.get("confidence", 0), f.get("evidence"), f.get("suggested_fix")))
         db.audit(c, "system", "verdict:" + status, f"submission:{submission_id}")
-    return {"submission_id": submission_id, "status": status, "reasons": reasons,
+    return {"submission_id": submission_id, "status": status, "reasons": reasons, "flags": flags,
             "claims": claims, "scripture": scripture, "findings": findings,
             "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."}

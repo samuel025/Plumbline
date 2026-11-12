@@ -40,7 +40,8 @@ def init():
         c.executescript(SCHEMA)
         for stmt in ("ALTER TABLE verdict ADD COLUMN edited_text TEXT",
                      "ALTER TABLE scripture_check ADD COLUMN submission_id INT",
-                     "ALTER TABLE finding ADD COLUMN submission_id INT"):
+                     "ALTER TABLE finding ADD COLUMN submission_id INT",
+                     "ALTER TABLE verdict ADD COLUMN flags TEXT"):
             try:  # lightweight migrations for databases created by earlier versions
                 c.execute(stmt)
             except sqlite3.OperationalError:

@@ -1,36 +1,95 @@
-"""Verdict engine: pure function. Approves only when every check is clean; any doubt goes to a person."""
+"""Verdict engine: pure function. Approves only when every check is clean; any doubt goes to a person.
+Every non-approved verdict carries structured FLAGS explaining exactly why."""
 CONF_MIN = 0.75
+RISK_LABELS = {"medical_advice": "medical advice", "legal_advice": "legal advice",
+               "replaces_professional_help": "replacing professional help"}
 
-def decide(claims: list[dict], scripture: list[dict], findings: list[dict], pii: list[str],
-           ai_disclosed: bool, llm_ok: bool, claims_pastor_authorship: bool = False) -> tuple[str, list[str]]:
-    blocked, review = [], []
+def cause_text(err: str) -> str:
+    e = (err or "").lower()
+    if "not set" in e or "set gemini" in e:
+        return "No model API key is configured."
+    if "429" in e or "quota" in e or "out of daily" in e:
+        return "The model's usage limit was reached."
+    if "503" in e or "overload" in e or "high demand" in e:
+        return "The model was overloaded."
+    if "timeout" in e or "timed out" in e:
+        return "The model took too long to answer."
+    if any(k in e for k in ("not an object", "json", "expecting", "delimiter", "unterminated", "decode", "candidates", "keyerror", "list index")):
+        return "The model returned an unreadable answer."
+    return "The model could not be reached."
+
+def _flag(kind, severity, title, claim="", detail="", source="", fix=""):
+    return {"kind": kind, "severity": severity, "title": title, "claim": claim, "detail": detail, "source": source, "fix": fix}
+
+def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_pastor_authorship=False,
+                commitments=None, llm_error=""):
+    commitments = commitments or {}
+    ctext = lambda i: claims[i]["text"] if isinstance(i, int) and 0 <= i < len(claims) else ""
+    flags = []
     if not llm_ok:
-        review.append("Automated judging was unavailable, so a pastor must review.")
+        flags.append(_flag("model_unavailable", "review", "The doctrine judge could not run",
+            detail=f"{cause_text(llm_error)} Plumbline never approves what it could not judge, so this was sent to a pastor.",
+            source="Safety rule: doubt never approves",
+            fix="Press “Check again” once the model is available, or decide it yourself."))
     if not claims and llm_ok:
-        review.append("No checkable claims were extracted; a person should read it.")
+        flags.append(_flag("no_claims", "review", "No checkable claims were found",
+            detail="Plumbline could not pull any claims out of this text, so it cannot vouch for it.", source="Safety rule: doubt never approves",
+            fix="Read it yourself, or paste a longer passage."))
     for c in claims:
-        if c.get("risk") in ("crisis", "abuse_disclosure"):
-            blocked.append(f"Crisis or abuse-related content ({c['risk']}): \"{c['text'][:80]}\". Route to a pastor; do not answer with AI.")
-        elif c.get("risk") in ("medical_advice", "legal_advice", "replaces_professional_help"):
-            review.append(f"Risky advice ({c['risk']}): \"{c['text'][:80]}\"")
+        r = c.get("risk")
+        if r in ("crisis", "abuse_disclosure"):
+            flags.append(_flag("risk", "block", "Crisis or abuse-related language" if r == "crisis" else "Abuse disclosure", c["text"],
+                "This may involve a person who is at risk. Plumbline never replies to someone in crisis; a pastor should respond personally.",
+                "Risk rule: crisis and abuse", "Route to a pastor today. Do not send an AI-written reply."))
+        elif r in RISK_LABELS:
+            flags.append(_flag("risk", "review", f"Risky advice: {RISK_LABELS[r]}", c["text"],
+                "The text gives advice that could affect someone's health, safety or legal position, or tells them to avoid professional help.",
+                "Risk rule: advice", "Remove it, or have a qualified professional review it."))
     for s in scripture:
+        claim = ctext(s.get("claim_index"))
         if s["result"] == "not_found":
-            review.append(f"Scripture reference not found: {s['reference']}")
+            flags.append(_flag("scripture", "review", "Scripture reference not found", claim,
+                f"{s['reference']} does not exist in the Bible text we check against. It may be invented or mistyped.",
+                "Bible text (KJV)", "Check the reference, or remove the quotation."))
         elif s["result"] == "misquote":
-            review.append(f"Quote does not match {s['reference']}")
+            flags.append(_flag("scripture", "review", "Quote does not match the verse", claim,
+                f"The quoted words do not match {s['reference']}, which reads: “{s.get('bible_text') or ''}”",
+                "Bible text (KJV)", "Quote the verse accurately, or paraphrase it."))
     for f in findings:
-        if f["label"] == "conflicts":
-            review.append(f"Conflicts with commitment: {f.get('evidence','')}")
-        elif f["label"] in ("silent", "contested"):
-            review.append(f"Statement of faith is {f['label']} on: {f.get('evidence','')}")
-        elif f["label"] == "aligned" and f.get("confidence", 0) < CONF_MIN:
-            review.append("Low-confidence judgment; needs a human look.")
+        claim, label = ctext(f.get("claim_index")), f["label"]
+        com = commitments.get(f.get("commitment_id"))
+        src = f"Your commitment: “{com}”" if com else ""
+        if label == "conflicts":
+            flags.append(_flag("conflict", "review", "Conflicts with your statement of faith", claim,
+                f.get("evidence") or "", src, f.get("suggested_fix") or "Rewrite it to match your commitment, or decide as a pastor."))
+        elif label == "silent":
+            flags.append(_flag("silent", "review", "Your statement of faith is silent on this", claim,
+                "No approved commitment or past ruling covers this claim, so Plumbline cannot say whether it fits your church. "
+                + (f.get("evidence") or "") if f.get("evidence") and f["evidence"] != claim else
+                "No approved commitment or past ruling covers this claim, so Plumbline cannot say whether it fits your church.",
+                "Gap in your standard", "Decide it, and save a ruling so the next similar claim is covered."))
+        elif label == "contested":
+            flags.append(_flag("contested", "review", "Judged as contested", claim, f.get("evidence") or "",
+                src, "A pastor should decide."))
+        elif label == "aligned" and f.get("confidence", 0) < CONF_MIN:
+            flags.append(_flag("low_confidence", "review", "Low-confidence match", claim,
+                f"Judged aligned, but with confidence {float(f.get('confidence', 0)):.2f}, below the {CONF_MIN} needed to approve.", src,
+                "Have a pastor confirm."))
     if pii:
-        review.append("Possible personal information: " + ", ".join(pii))
+        flags.append(_flag("privacy", "review", "Possible personal information", "",
+            "The text appears to contain: " + ", ".join(pii) + ".", "Privacy rule", "Remove or anonymise it before publishing."))
     if claims_pastor_authorship and not ai_disclosed:
-        review.append("Text implies a pastor wrote it but AI use is not disclosed.")
-    if blocked:
-        return "blocked", blocked + review
-    if review:
-        return "needs_review", review
-    return "approved", ["All claims aligned with the church's commitments; all Scripture verified."]
+        flags.append(_flag("authorship", "review", "Implies a pastor wrote it", "",
+            "The text suggests a pastor wrote it, but AI use is not disclosed.", "AI honesty rule", "Disclose AI use, or have the pastor rewrite it."))
+    reasons = [f["title"] + (": " + (f["claim"] or f["detail"])[:90] if (f["claim"] or f["detail"]) else "") for f in flags]
+    if any(f["severity"] == "block" for f in flags):
+        status = "blocked"
+    elif flags:
+        status = "needs_review"
+    else:
+        status, reasons = "approved", ["All claims aligned with the church's commitments; all Scripture verified."]
+    return status, reasons, flags
+
+def decide(*a, **k):
+    status, reasons, _ = decide_full(*a, **k)
+    return status, reasons

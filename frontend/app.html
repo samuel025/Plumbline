@@ -195,6 +195,20 @@ blockquote{margin:0;padding:12px 16px;background:var(--linen);border-radius:10px
 .decide{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
 .fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12.5px}
 
+/* flags: why something was flagged */
+.why{margin:2px 0 20px}
+.flag{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px;margin-top:10px;background:var(--paper)}
+.flag.block{border-left-color:var(--bad)}
+.flag .fh{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.flag .fh b{font-weight:500;font-size:14.5px}
+.sev{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--warn-bg);color:#7a5410}
+.flag.block .sev{background:var(--bad-bg);color:var(--bad)}
+.flag .fq{margin:0 0 8px;padding:9px 12px;font-size:13.5px;font-style:italic;max-height:none}
+.flag p{margin:0;font-size:13.5px;color:var(--graphite)}
+.flag .src{margin-top:8px;font-size:12.5px;color:var(--ash)}
+.flag .src::before{content:"Based on: ";color:var(--stone)}
+.vhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
 /* misc */
 .empty{text-align:center;padding:44px 20px;color:var(--ash)}
 .empty .ic{width:44px;height:44px;border-radius:50%;background:var(--bone);margin:0 auto 14px;display:grid;place-items:center}
@@ -335,9 +349,17 @@ function resultHTML(d,{withDecision=false}={}){
       <div style="margin-top:4px">${esc(f.evidence||"")}</div>${f.commitment_text?`<div class="verse">Commitment: ${esc(f.commitment_text)}</div>`:""}
       ${f.suggested_fix?`<div class="fix"><b>Suggested fix:</b> ${esc(f.suggested_fix)}</div>`:""}</div>`}).join("")}</div>`).join("");
   const loose=d.loose_scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="claim"><span class="chip ${c}">${t}</span> <b>${esc(x.reference)}</b>${x.bible_text?`<div class="verse">KJV: ${esc(x.bible_text)}</div>`:""}</div>`}).join("");
-  return `<div class="verdict ${st}"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
+  const flags=v.flags||[];
+  const flagHTML=f=>`<div class="flag ${f.severity}"><div class="fh"><span class="sev">${f.severity==="block"?"Blocked":"Needs a person"}</span><b>${esc(f.title)}</b></div>
+    ${f.claim?`<blockquote class="fq">“${esc(f.claim)}”</blockquote>`:""}${f.detail?`<p>${esc(f.detail)}</p>`:""}${f.source?`<div class="src">${esc(f.source)}</div>`:""}
+    ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
+    ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div>`;
+  const whyHTML=flags.length?`<div class="why"><h3>Why this was flagged <span class="mut">· ${flags.length} reason${flags.length>1?"s":""}</span></h3>${flags.map(flagHTML).join("")}</div>`:"";
+  return `<div class="verdict ${st}"><div class="vhead"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
+    <button class="btn ghost sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}" title="Run every check again on this same text">Check again</button></div>
     <div class="w">${LBL[st]}</div><div style="font-size:14px">${summary}</div>
-    <ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>${final}</div>
+    ${flags.length?"":`<ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`}${final}</div>
+    ${whyHTML}
     <div class="miniKpis"><div><b>${all.length}</b><span>claims</span></div><div><b>${okV}/${verses.length}</b><span>verses verified</span></div><div><b style="color:${conflicts?"var(--bad)":"inherit"}">${conflicts}</b><span>conflicts</span></div><div><b style="color:${risks?"var(--bad)":"inherit"}">${risks}</b><span>risks</span></div></div>
     <h3>Content</h3><blockquote>${esc(s.raw_text)}</blockquote>
     <h3 style="margin-top:20px">What we checked</h3>
@@ -510,6 +532,9 @@ document.addEventListener("keydown",e=>{
     if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();palSel=(palSel+(e.key==="ArrowDown"?1:-1)+n)%n;document.querySelectorAll(".pi").forEach((el,i)=>el.classList.toggle("on",i===palSel));document.querySelector(".pi.on")?.scrollIntoView({block:"nearest"})}
     if(e.key==="Enter"){e.preventDefault();palGo(palSel)}}});
 
+async function showCheck(id){const d=await api("/api/submissions/"+id);
+  $("#out").innerHTML=`<div class="card">${resultHTML(d)}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${id}">Open in review queue</a></div>`:""}</div>`}
+
 /* ---------- actions ---------- */
 const A={
  closeAll,palette:openPalette,
@@ -522,10 +547,18 @@ const A={
    const b=$("#go");b.disabled=true;b.innerHTML='<span class="spin" style="border-top-color:#fff;border-color:#777"></span>Checking…';
    $("#out").innerHTML=`<div class="card"><div class="mut" style="margin-bottom:12px">Splitting claims, looking up verses, judging against your commitments…</div>${skel(70,3)}</div>`;
    try{const r=await send("POST","/api/check",{church_id:+cid(),text,content_type:CTYPE,ai_disclosed:$("#disc").checked});
-     const d=await api("/api/submissions/"+r.submission_id);
-     $("#out").innerHTML=`<div class="card">${resultHTML(d)}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${r.submission_id}">Open in review queue</a></div>`:""}</div>`;refreshPending();loadHealth()}
+     await showCheck(r.submission_id);refreshPending();loadHealth()}
    catch(e){$("#out").innerHTML=`<div class="card empty"><b>Check failed</b>${esc(e.message)}</div>`}
    b.disabled=false;b.textContent="Check content"},
+ async recheck(d){const id=d.id;
+   if(d.decided==="1"&&!confirm("A pastor already decided this. Checking again clears that decision. Continue?"))return;
+   const btns=[...document.querySelectorAll(`[data-act="recheck"][data-id="${id}"]`)];btns.forEach(b=>{b.disabled=true;b.innerHTML='<span class="spin"></span>Checking…'});
+   try{const r=await send("POST",`/api/submissions/${id}/recheck`);toast("Checked again: "+(LBL[r.status]||r.status));
+     if($("#drawer").classList.contains("on"))await openDetail(id);
+     else if(route()==="check"&&$("#out"))await showCheck(id);
+     else render();
+     refreshPending();loadHealth()}
+   catch(e){toast(e.message);btns.forEach(b=>{b.disabled=false;b.textContent="Check again"})}},
  async decide(d){const id=d.id,pat=($("#rp-"+id)||{}).value||"";
    try{await send("POST",`/api/submissions/${id}/decide`,{decision:d.d,reviewer:"pastor",edited_text:d.d==="edited"?$("#ed-"+id).value:"",save_ruling:!!pat.trim(),claim_pattern:pat.trim(),note:($("#rn-"+id)||{}).value||""});
      toast(d.d==="rejected"?"Rejected":"Approved"+(pat.trim()?" and saved as a ruling":""));closeAll();location.hash.startsWith("#/review/")?(location.hash="#/review"):render()}
