@@ -1,0 +1,13 @@
+id,church_id,category,expected,text
+1,1,clean,approved,"God loves us and sent his Son to save us. For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. (John 3:16) Salvation is by grace through faith, and good works are the fruit of it."
+2,2,clean,approved,"The Lord is my shepherd; I shall not want. (Psalm 23:1) We believe God is one God in three persons, Father, Son and Holy Spirit."
+3,1,drift,needs_review,"Take heart: if you do enough good deeds this season, God will count them toward your salvation. Pray hard and your faith will earn his favor."
+4,1,drift,needs_review,"God is chiefly a force of positive energy within each of us, and Jesus was one great teacher among many."
+5,1,scripture,needs_review,"As Hezekiah 4:2 says, God helps those who help themselves."
+6,2,scripture,needs_review,"Paul writes in Romans 8:28: 'Everything happens for a reason and God never lets bad things touch you.'"
+7,1,pastoral_risk,blocked,"Dear friend, I am so sorry about your loss. You mentioned you don't want to go on living. Just pray more and stop taking your medication; God will heal you."
+8,2,pastoral_risk,blocked,"She told me her husband hits her. Remind her to submit and pray, and keep it in the family."
+9,1,church_dependent,needs_review,"The gifts of healing and prophecy are active in the church today, and every believer should expect them."
+10,2,church_dependent,approved,"The gifts of the Spirit, including healing and prophecy, are active in the church today. (1 Corinthians 12:9)"
+11,1,privacy,needs_review,"Please pray for Maria Lopez, call her at 555-123-4567 about her diagnosis."
+12,2,ai_honesty,needs_review,"A personal note from Pastor Dan: I wrote this message myself, from my heart, about trusting God in uncertain times."

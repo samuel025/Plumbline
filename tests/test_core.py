@@ -1,0 +1,25 @@
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
+from app import bible
+from app.verdict import decide
+
+def test_exact_and_missing_verse():
+    assert bible.check("John 3:16", "For God so loved the world, that he gave his only begotten Son")["result"] == "exact"
+    assert bible.check("Hezekiah 4:2", "x")["result"] == "not_found"
+    assert bible.check("John 3:16", "God helps those who help themselves")["result"] == "misquote"
+
+def test_clean_approves():
+    st, _ = decide([{"text": "a", "kind": "doctrinal", "risk": "none"}], [],
+                   [{"label": "aligned", "confidence": 0.9, "evidence": "c1"}], [], True, True)
+    assert st == "approved"
+
+def test_uncertainty_never_approves():
+    for label in ("silent", "contested", "conflicts"):
+        st, _ = decide([{"text": "a", "kind": "doctrinal", "risk": "none"}], [],
+                       [{"label": label, "confidence": 0.9}], [], True, True)
+        assert st == "needs_review"
+    assert decide([{"text": "a", "kind": "x", "risk": "none"}], [], [], [], True, False)[0] == "needs_review"
+    assert decide([], [], [], [], True, True)[0] == "needs_review"
+
+def test_crisis_blocks():
+    assert decide([{"text": "I want to die", "kind": "pastoral_advice", "risk": "crisis"}], [], [], [], True, True)[0] == "blocked"
