@@ -10,7 +10,9 @@ EXTRACT_SYS = """You split church-related text into checkable claims. Return ONL
 Rules: only extract statements that assert a doctrine, quote or cite Scripture, give advice that affects health, safety,
 legal or spiritual standing, or state a checkable fact. Skip pure encouragement, greetings and general exhortation
 ("we are never alone", "bring your worries to God"). One claim per statement; copy Scripture references and any quoted verse text exactly as written;
-mark risk=crisis for suicide/self-harm, abuse_disclosure for disclosed abuse. Never answer the text; only extract."""
+mark risk=crisis for suicide/self-harm, abuse_disclosure for disclosed abuse. Use medical_advice, legal_advice or
+replaces_professional_help ONLY when the text itself gives such advice or tells someone to avoid or replace a doctor,
+counselor or lawyer; advice that encourages seeking professional help is risk "none". Never answer the text; only extract."""
 
 def judge_system(church, commitments, rulings):
     cs = "\n".join(f"[{c['id']}] {c['text']}" for c in commitments)
@@ -23,7 +25,8 @@ PASTOR RULINGS (precedent):
 {rs}
 Return ONLY JSON: {{"findings":[{{"claim_index":int,"commitment_id":int|null,"label":"aligned|conflicts|silent|contested",
 "confidence":0-1,"evidence":str,"suggested_fix":str|null}}]}}
-Rules: if a PASTOR RULING covers the claim, follow it: an approved ruling means "aligned" (put "ruling" in evidence),
+Rules: before choosing "silent", check EVERY commitment; if one states the same belief as the claim, the label is "aligned"
+and you must cite that commitment's id. If a PASTOR RULING covers the claim, follow it: an approved ruling means "aligned" (put "ruling" in evidence),
 a rejected ruling means "conflicts". Otherwise use "silent" only if the claim asserts a doctrinal position that no commitment addresses; generic comfort or
 exhortation that contradicts no commitment is "aligned" (cite the closest commitment id); if unsure, use "contested" with low confidence.
 Never use "aligned" without citing a commitment id or a pastor ruling. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
@@ -55,8 +58,9 @@ def run(submission_id: int) -> dict:
     seen = set()
     for i, cl in enumerate(claims):
         if cl.get("reference"):
-            r = bible.check(cl["reference"], cl.get("quoted_text")); r["claim_index"] = i
-            scripture.append(r); seen.add(cl["reference"])
+            ref = bible.clean_ref(cl["reference"])
+            r = bible.check(ref, cl.get("quoted_text")); r["claim_index"] = i
+            scripture.append(r); seen.add(ref)
     for ref in bible.find_references(text):
         if ref not in seen:
             r = bible.check(ref, None); r["claim_index"] = None

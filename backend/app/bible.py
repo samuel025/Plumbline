@@ -39,13 +39,26 @@ def normalize_book(name: str) -> str:
 
 GENERIC_RE = re.compile(r"\b((?:[1-3]\s)?[A-Z][a-z]+(?:\s[A-Z][a-z]+)?)\.?\s+(\d{1,3}):(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?")
 
+_FILLER = {"as", "see", "in", "per", "cf", "and", "also", "the", "read", "from", "says", "of", "to", "at", "by", "or"}
+
+def clean_ref(ref: str) -> str:
+    """Drop leading filler words ('As Hezekiah 4:2' -> 'Hezekiah 4:2')."""
+    parts = ref.split(" ")
+    while len(parts) > 2 and parts[0].lower() in _FILLER:
+        parts = parts[1:]
+    return " ".join(parts)
+
 def find_references(text: str) -> list[str]:
     """Known books plus any 'Capitalized N:N' pattern, so invented books (e.g. 'Hezekiah 4:2') are caught."""
     known = [f"{normalize_book(m.group(1))} {m.group(2)}:{m.group(3)}" + (f"-{m.group(4)}" if m.group(4) else "")
             for m in REF_RE.finditer(text)]
     extra = [f"{m.group(1)} {m.group(2)}:{m.group(3)}" for m in GENERIC_RE.finditer(text)
              if not REF_RE.fullmatch(m.group(0))]
-    return known + [e for e in extra if e not in known and not any(e.split(" ",1)[0] in k for k in known if e.split(" ",1)[1] in k)]
+    out = list(known)
+    for e in (clean_ref(e) for e in extra):
+        if e not in out and not any(e.split(" ", 1)[1] in k for k in known):
+            out.append(e)
+    return out
 
 def lookup(reference: str) -> str | None:
     m = REF_RE.search(reference)

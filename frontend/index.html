@@ -1,62 +1,189 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Plumbline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fafaf7;--fg:#1d1d1b;--mut:#6b6b66;--card:#fff;--line:#e2e0d8;--ok:#2e7d32;--warn:#b26a00;--bad:#b3261e}
-@media(prefers-color-scheme:dark){:root{--bg:#161614;--fg:#eeeee8;--mut:#9a9a92;--card:#201f1d;--line:#38362f}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{max-width:760px;margin:0 auto;padding:24px 16px}
-h1{margin:0 0 4px}textarea,select,button{font:inherit;width:100%;box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
-textarea{min-height:160px}button{background:var(--fg);color:var(--bg);cursor:pointer;width:auto;padding:10px 20px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:14px 0}
-.pill{display:inline-block;padding:2px 12px;border-radius:99px;color:#fff;font-weight:600}
-.approved{background:var(--ok)}.needs_review{background:var(--warn)}.blocked{background:var(--bad)}
-.mut{color:var(--mut);font-size:14px}h2{font-size:18px}
-</style></head><body><main>
-<h1>Plumbline</h1><div class="mut">Checks AI-written church content against your own statement of faith and Scripture. A pastor always decides.</div>
-<div class="card"><h2>1. Set the standard</h2>
-<div class="mut">Paste your statement of faith. Plumbline drafts commitments; nothing is used until a pastor approves it.</div>
-<textarea id="stmt" placeholder="Paste a statement of faith (synthetic data only)"></textarea>
-<button id="extract">Draft commitments</button><div id="drafts"></div></div>
-<div class="card"><h2>2. Check content</h2><label>Church <select id="church"></select></label>
-<textarea id="text" placeholder="Paste AI-written text here (synthetic data only)"></textarea>
-<label><input type="checkbox" id="disc" style="width:auto"> AI use is disclosed</label><br>
-<button id="go">Check</button></div>
-<div id="out"></div>
-<h2>Pastor review queue</h2><div id="queue" class="mut">Nothing waiting.</div>
-<h2>Pastor rulings (precedent)</h2><div class="mut">Saved decisions are shown to the judge on similar future claims. Remove one to retire it.</div><div id="rulings" class="mut"></div>
+:root{
+  --ink:#1b0624; --espresso:#160f0c; --ash:#766a7c; --graphite:#444; --stone:#898683;
+  --linen:#f7f7f5; --paper:#fff; --bone:#edece7; --mist:#eee;
+  --ring:inset 0 0 0 1px rgba(0,0,0,.07);
+  /* verdict marks: the one deliberate use of color, kept muted so the page stays near-achromatic */
+  --ok:#3f6b4f; --warn:#a8741a; --bad:#9b2c2c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--linen);color:var(--ink);font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-feature-settings:"cv11","tnum";-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+
+/* nav */
+nav{background:var(--paper)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:18px;letter-spacing:-.01em}
+.mark{width:14px;height:26px;display:block}
+.who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ash)}
+.who select{width:auto;max-width:46vw;padding:8px 36px 8px 16px;margin:0;border-radius:999px;font-size:14px;
+  appearance:none;background:var(--mist) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23444' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 16px center}
+
+/* hero */
+.hero{padding:88px 0 56px}
+h1{font-weight:400;font-size:clamp(42px,8vw,76px);line-height:1;letter-spacing:-.06em;margin:0 0 24px;max-width:13ch}
+.lede{font-size:20px;line-height:1.4;letter-spacing:-.01em;color:var(--graphite);max-width:34em;margin:0}
+.rule{display:flex;align-items:center;gap:12px;margin:32px 0 0;color:var(--ash);font-size:14px}
+.rule i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+
+/* sections */
+section{padding:48px 0;border-top:1px solid rgba(0,0,0,.08)}
+.step{display:grid;grid-template-columns:200px 1fr;gap:32px}
+@media(max-width:760px){.step{grid-template-columns:1fr;gap:16px}.hero{padding:56px 0 32px}}
+.num{font-size:14px;color:var(--ash);margin-bottom:8px}
+h2{font-weight:400;font-size:32px;line-height:1.2;letter-spacing:-.03em;margin:0 0 8px}
+.side p{color:var(--ash);font-size:14px;line-height:1.5;margin:0}
+
+/* cards + controls */
+.card{background:var(--paper);box-shadow:var(--ring);border-radius:16px;padding:24px;margin:0 0 16px}
+textarea,input[type=text],input:not([type]){width:100%;padding:12px 14px;margin:0 0 12px;border:1px solid var(--stone);border-radius:8px;
+  background:var(--mist);color:var(--ink);font:inherit;font-size:16px;outline:none}
+textarea{min-height:150px;resize:vertical}
+textarea.sm{min-height:72px}
+textarea:focus,input:focus,select:focus{border-color:var(--espresso)}
+::placeholder{color:var(--stone)}
+button{font:inherit;font-size:15px;cursor:pointer;border-radius:999px;padding:10px 22px;border:1px solid var(--espresso);background:var(--espresso);color:#fff;transition:opacity .15s}
+button:hover{opacity:.86}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--stone)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--graphite);margin:0 0 16px}
+.check input{width:18px;height:18px;margin:0;accent-color:var(--espresso)}
+.mut{color:var(--ash);font-size:14px;line-height:1.5}
+.empty{color:var(--stone);font-size:14px;padding:8px 0}
+
+/* verdict */
+.badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 10px;border-radius:999px;background:var(--bone);font-size:13px;font-weight:500}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--stone)}
+.badge.approved::before{background:var(--ok)}.badge.needs_review::before{background:var(--warn)}.badge.blocked::before{background:var(--bad)}
+.verdict-word{font-size:44px;line-height:1.1;letter-spacing:-.05em;margin:14px 0 12px}
+.reasons{margin:0 0 8px;padding:0;list-style:none}
+.reasons li{padding:12px 0;border-top:1px solid rgba(0,0,0,.07);font-size:15px;color:var(--graphite)}
+.finding{font-size:14px;color:var(--ash);border-top:1px solid rgba(0,0,0,.07);padding:12px 0}
+.finding b{color:var(--ink);font-weight:500}
+.fix{color:var(--graphite);margin-top:4px}
+.disc{font-size:13px;color:var(--stone);margin-top:12px}
+.ruling-head{font-weight:500;letter-spacing:-.01em}
+footer{padding:40px 0 64px;color:var(--stone);font-size:13px;border-top:1px solid rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 14 26" fill="none" stroke="#1b0624" stroke-width="1.4" aria-hidden="true"><path d="M7 0v17"/><path d="M7 17l5 4.5-5 4.5-5-4.5z" fill="#1b0624"/></svg>
+    Plumbline
+  </div>
+  <label class="who">Church <select id="church" aria-label="Church"></select></label>
+</div></nav>
+
+<main class="wrap">
+  <header class="hero">
+    <h1>Would your pastor publish this?</h1>
+    <p class="lede">Plumbline checks AI-written church content against your own statement of faith and against Scripture, then tells a pastor what is safe to use and why.</p>
+    <div class="rule"><i></i> Doubt never approves. A pastor always decides.</div>
+  </header>
+
+  <section class="step">
+    <div class="side"><div class="num">01</div><h2>Set the standard</h2><p>Paste your statement of faith. Nothing counts until a pastor approves it.</p></div>
+    <div>
+      <div class="card">
+        <textarea id="stmt" placeholder="Paste a statement of faith (synthetic data only)"></textarea>
+        <button id="extract">Draft commitments</button>
+      </div>
+      <div id="drafts"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="side"><div class="num">02</div><h2>Check content</h2><p>Every claim and every verse is checked. Anything uncertain goes to a person.</p></div>
+    <div>
+      <div class="card">
+        <textarea id="text" placeholder="Paste AI-written text here (synthetic data only)"></textarea>
+        <label class="check"><input type="checkbox" id="disc"> AI use is disclosed to the congregation</label>
+        <button id="go">Check</button>
+      </div>
+      <div id="out"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="side"><div class="num">03</div><h2>Pastor review</h2><p>Approve, edit or reject. Save a ruling and it guides similar claims later.</p></div>
+    <div><div id="queue"></div></div>
+  </section>
+
+  <section class="step">
+    <div class="side"><div class="num">04</div><h2>Rulings</h2><p>This church's own precedent. Remove one to retire it.</p></div>
+    <div><div id="rulings"></div></div>
+  </section>
+
+  <footer>Plumbline is an AI assistant to the pastor, never a replacement. It does not judge which theology is right; it checks content against this church's own written standard. Synthetic data only.</footer>
+</main>
+
 <script>
-const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const label={approved:"Approved",needs_review:"Needs pastor review",blocked:"Blocked"};
+const empty=t=>`<div class="empty">${t}</div>`;
 async function j(u,o){const r=await fetch(u,o);return r.json()}
-async function loadChurches(){const cs=await j("/api/churches");$("church").innerHTML=cs.map(c=>`<option value=${c.id}>${esc(c.name)}</option>`).join("");loadQueue();loadDrafts();loadRulings()}
+const post=(u,b)=>j(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+
+async function loadChurches(){const cs=await j("/api/churches");
+  $("church").innerHTML=cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");refresh()}
+function refresh(){loadQueue();loadDrafts();loadRulings();$("out").innerHTML=""}
+
 async function loadQueue(){const q=await j("/api/queue?church_id="+$("church").value);
- $("queue").innerHTML=q.length?q.map(i=>`<div class="card"><span class="pill ${i.status}">${label[i.status]}</span> <span class="mut">#${i.id}</span>
- <p>${esc(i.preview)}…</p><ul>${JSON.parse(i.reasons).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
- <textarea id="e${i.id}" style="min-height:70px" title="Edit the text before approving">${esc(i.raw_text)}</textarea>
- <input id="p${i.id}" placeholder="Save as ruling: the kind of claim this covers (optional)" style="width:100%;box-sizing:border-box;padding:8px;margin:4px 0">
- <input id="n${i.id}" placeholder="Note for future reviewers (optional)" style="width:100%;box-sizing:border-box;padding:8px;margin:4px 0">
- <button onclick="decide(${i.id},'approved')">Approve</button> <button onclick="decide(${i.id},'edited')">Approve with my edits</button> <button onclick="decide(${i.id},'rejected')">Reject</button></div>`).join(""):"Nothing waiting."}
+  $("queue").innerHTML=q.length?q.map(i=>`<div class="card"><span class="badge ${i.status}">${label[i.status]}</span> <span class="mut">#${i.id}</span>
+    <ul class="reasons">${JSON.parse(i.reasons).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+    <textarea id="e${i.id}" class="sm" title="Edit the text before approving">${esc(i.raw_text)}</textarea>
+    <input id="p${i.id}" placeholder="Save as ruling: the kind of claim this covers (optional)">
+    <input id="n${i.id}" placeholder="Note for future reviewers (optional)">
+    <div class="row"><button onclick="decide(${i.id},'approved')">Approve</button>
+    <button class="ghost" onclick="decide(${i.id},'edited')">Approve with my edits</button>
+    <button class="ghost" onclick="decide(${i.id},'rejected')">Reject</button></div></div>`).join(""):empty("Nothing is waiting for review.")}
 async function decide(id,d){const pat=$("p"+id).value.trim();
- await j(`/api/submissions/${id}/decide`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision:d,reviewer:"pastor",edited_text:d==="edited"?$("e"+id).value:"",save_ruling:!!pat,claim_pattern:pat,note:$("n"+id).value})});loadQueue();loadRulings()}
+  await post(`/api/submissions/${id}/decide`,{decision:d,reviewer:"pastor",edited_text:d==="edited"?$("e"+id).value:"",save_ruling:!!pat,claim_pattern:pat,note:$("n"+id).value});
+  loadQueue();loadRulings()}
+
 async function loadRulings(){const r=await j(`/api/churches/${$("church").value}/rulings`);
- $("rulings").innerHTML=r.length?r.map(x=>`<div class="card"><b>${esc(x.claim_pattern)}</b> → ${esc(x.decision)}<div class="mut">${esc(x.pastor_note)}</div>
- <button onclick="delR(${x.id})">Remove</button></div>`).join(""):"No rulings yet."}
+  $("rulings").innerHTML=r.length?r.map(x=>`<div class="card"><div class="ruling-head">${esc(x.claim_pattern)} <span class="mut">→ ${esc(x.decision)}</span></div>
+    <div class="mut" style="margin:4px 0 12px">${esc(x.pastor_note)}</div><button class="ghost" onclick="delR(${x.id})">Remove</button></div>`).join(""):empty("No rulings yet.")}
 async function delR(id){await j("/api/rulings/"+id,{method:"DELETE"});loadRulings()}
-$("church").onchange=()=>{loadQueue();loadDrafts();loadRulings()};
-async function loadDrafts(){const cs=await j(`/api/churches/${$("church").value}/commitments`);const d=cs.filter(c=>c.status==="draft");
- $("drafts").innerHTML=d.map(c=>`<div class="card"><textarea id="c${c.id}" style="min-height:60px">${esc(c.text)}</textarea>
- <div class="mut">${esc(c.topic)}${c.source_excerpt?" · source: “"+esc(c.source_excerpt)+"”":" · no verified source excerpt"}</div>
- <button onclick="approveC(${c.id})">Approve</button> <button onclick="delC(${c.id})">Remove</button></div>`).join("")}
-async function approveC(id){const t=$("c"+id).value;await j("/api/commitments/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
- await j(`/api/commitments/${id}/approve`,{method:"POST"});loadDrafts()}
+
+async function loadDrafts(){const cs=await j(`/api/churches/${$("church").value}/commitments`);
+  const d=cs.filter(c=>c.status==="draft"), a=cs.filter(c=>c.status==="approved").length;
+  $("drafts").innerHTML=(a?`<div class="mut" style="margin:0 0 12px">${a} approved commitment${a>1?"s":""} in force.</div>`:"")+
+  d.map(c=>`<div class="card"><textarea id="c${c.id}" class="sm">${esc(c.text)}</textarea>
+    <div class="mut" style="margin-bottom:12px">${esc(c.topic)}${c.source_excerpt?" · source: “"+esc(c.source_excerpt)+"”":" · no verified source excerpt"}</div>
+    <div class="row"><button onclick="approveC(${c.id})">Approve</button><button class="ghost" onclick="delC(${c.id})">Remove</button></div></div>`).join("")}
+async function approveC(id){await j("/api/commitments/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("c"+id).value})});
+  await j(`/api/commitments/${id}/approve`,{method:"POST"});loadDrafts()}
 async function delC(id){await j("/api/commitments/"+id,{method:"DELETE"});loadDrafts()}
-$("extract").onclick=async()=>{$("extract").disabled=true;$("drafts").textContent="Drafting…";
- const r=await fetch(`/api/churches/${$("church").value}/statement`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("stmt").value})});
- if(!r.ok){$("drafts").textContent=(await r.json()).detail||"Failed"}else loadDrafts();$("extract").disabled=false};
-$("go").onclick=async()=>{$("go").disabled=true;$("out").innerHTML="Checking…";
- const v=await j("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({church_id:+$("church").value,text:$("text").value,ai_disclosed:$("disc").checked})});
- $("out").innerHTML=`<div class="card"><span class="pill ${v.status}">${label[v.status]}</span><ul>${v.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
- ${v.findings.map(f=>`<p class="mut">${esc(f.label)} (${f.confidence}) — ${esc(f.evidence)}${f.suggested_fix?"<br>Fix: "+esc(f.suggested_fix):""}</p>`).join("")}
- <p class="mut">${esc(v.ai_disclosure)}</p></div>`;$("go").disabled=false;loadQueue()};
+
+$("extract").onclick=async()=>{$("extract").disabled=true;$("drafts").innerHTML=empty("Drafting…");
+  const r=await fetch(`/api/churches/${$("church").value}/statement`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("stmt").value})});
+  if(!r.ok){$("drafts").innerHTML=empty(esc((await r.json()).detail||"Failed"))}else loadDrafts();$("extract").disabled=false};
+
+$("go").onclick=async()=>{$("go").disabled=true;$("out").innerHTML=empty("Checking…");
+  try{const v=await post("/api/check",{church_id:+$("church").value,text:$("text").value,ai_disclosed:$("disc").checked});
+  $("out").innerHTML=`<div class="card"><span class="badge ${v.status}">${label[v.status]}</span><div class="verdict-word">${label[v.status]}</div>
+    <ul class="reasons">${v.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+    ${v.findings.map(f=>`<div class="finding"><b>${esc(f.label)}</b> · confidence ${f.confidence} — ${esc(f.evidence)}${f.suggested_fix?`<div class="fix">Suggested fix: ${esc(f.suggested_fix)}</div>`:""}</div>`).join("")}
+    <div class="disc">${esc(v.ai_disclosure)}</div></div>`;loadQueue()}
+  catch(e){$("out").innerHTML=empty("Something went wrong. Try again.")}
+  $("go").disabled=false};
+
+$("church").onchange=refresh;
 loadChurches();
-</script></main></body></html>
+</script>
+</body>
+</html>

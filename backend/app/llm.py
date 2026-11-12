@@ -26,7 +26,10 @@ class LLMUnavailable(Exception):
 
 def _parse(text: str) -> dict:
     m = re.search(r"\{.*\}", text, re.S)
-    return json.loads(m.group(0) if m else text)
+    data = json.loads(m.group(0) if m else text)
+    if not isinstance(data, dict):
+        raise ValueError("model returned JSON that is not an object")
+    return data
 
 def _gemini(key: str, system: str, user: str, max_tokens: int) -> dict:
     last = None
@@ -65,7 +68,10 @@ def call_json(system: str, user: str, max_tokens: int = 4000) -> dict:
     gk, ak = os.environ.get("GEMINI_API_KEY"), os.environ.get("ANTHROPIC_API_KEY")
     if not (gk or ak):
         raise LLMUnavailable("Set GEMINI_API_KEY or ANTHROPIC_API_KEY")
-    try:
-        return _gemini(gk, system, user, max_tokens) if gk else _anthropic(ak, system, user, max_tokens)
-    except Exception as e:
-        raise LLMUnavailable(str(e)) from e
+    last = None
+    for _ in range(2):  # one retry covers a malformed or transient response
+        try:
+            return _gemini(gk, system, user, max_tokens) if gk else _anthropic(ak, system, user, max_tokens)
+        except Exception as e:
+            last = e
+    raise LLMUnavailable(str(last)) from last

@@ -45,3 +45,8 @@ def test_extract_makes_drafts_only(tmp_path, monkeypatch):
     out = commitments.extract(1, "We believe in one God, three persons.")
     assert [o["status"] for o in out] == ["draft", "draft"]
     assert [o["excerpt_verified"] for o in out] == [True, False]
+
+def test_reference_not_duplicated_by_leading_word():
+    refs = bible.find_references("As Hezekiah 4:2 says, and see John 3:16.")
+    assert refs.count("Hezekiah 4:2") == 1 and "As Hezekiah 4:2" not in refs
+    assert refs.count("John 3:16") == 1
