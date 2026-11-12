@@ -23,9 +23,10 @@ PASTOR RULINGS (precedent):
 {rs}
 Return ONLY JSON: {{"findings":[{{"claim_index":int,"commitment_id":int|null,"label":"aligned|conflicts|silent|contested",
 "confidence":0-1,"evidence":str,"suggested_fix":str|null}}]}}
-Rules: use "silent" only if the claim asserts a doctrinal position that no commitment addresses; generic comfort or
+Rules: if a PASTOR RULING covers the claim, follow it: an approved ruling means "aligned" (put "ruling" in evidence),
+a rejected ruling means "conflicts". Otherwise use "silent" only if the claim asserts a doctrinal position that no commitment addresses; generic comfort or
 exhortation that contradicts no commitment is "aligned" (cite the closest commitment id); if unsure, use "contested" with low confidence.
-Never use "aligned" without citing the commitment id. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
+Never use "aligned" without citing a commitment id or a pastor ruling. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
 
 PII_RES = {"phone number": r"\b(?:\+?\d{1,2}[\s.-])?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b",
            "email address": r"\b[\w.+-]+@[\w-]+\.[\w.]+\b"}

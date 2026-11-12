@@ -23,17 +23,26 @@ textarea{min-height:160px}button{background:var(--fg);color:var(--bg);cursor:poi
 <button id="go">Check</button></div>
 <div id="out"></div>
 <h2>Pastor review queue</h2><div id="queue" class="mut">Nothing waiting.</div>
+<h2>Pastor rulings (precedent)</h2><div class="mut">Saved decisions are shown to the judge on similar future claims. Remove one to retire it.</div><div id="rulings" class="mut"></div>
 <script>
 const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const label={approved:"Approved",needs_review:"Needs pastor review",blocked:"Blocked"};
 async function j(u,o){const r=await fetch(u,o);return r.json()}
-async function loadChurches(){const cs=await j("/api/churches");$("church").innerHTML=cs.map(c=>`<option value=${c.id}>${esc(c.name)}</option>`).join("");loadQueue();loadDrafts()}
+async function loadChurches(){const cs=await j("/api/churches");$("church").innerHTML=cs.map(c=>`<option value=${c.id}>${esc(c.name)}</option>`).join("");loadQueue();loadDrafts();loadRulings()}
 async function loadQueue(){const q=await j("/api/queue?church_id="+$("church").value);
  $("queue").innerHTML=q.length?q.map(i=>`<div class="card"><span class="pill ${i.status}">${label[i.status]}</span> <span class="mut">#${i.id}</span>
  <p>${esc(i.preview)}…</p><ul>${JSON.parse(i.reasons).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
- <button onclick="decide(${i.id},'approved')">Approve</button> <button onclick="decide(${i.id},'rejected')">Reject</button></div>`).join(""):"Nothing waiting."}
-async function decide(id,d){await j(`/api/submissions/${id}/decide`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision:d,reviewer:"pastor"})});loadQueue()}
-$("church").onchange=()=>{loadQueue();loadDrafts()};
+ <textarea id="e${i.id}" style="min-height:70px" title="Edit the text before approving">${esc(i.raw_text)}</textarea>
+ <input id="p${i.id}" placeholder="Save as ruling: the kind of claim this covers (optional)" style="width:100%;box-sizing:border-box;padding:8px;margin:4px 0">
+ <input id="n${i.id}" placeholder="Note for future reviewers (optional)" style="width:100%;box-sizing:border-box;padding:8px;margin:4px 0">
+ <button onclick="decide(${i.id},'approved')">Approve</button> <button onclick="decide(${i.id},'edited')">Approve with my edits</button> <button onclick="decide(${i.id},'rejected')">Reject</button></div>`).join(""):"Nothing waiting."}
+async function decide(id,d){const pat=$("p"+id).value.trim();
+ await j(`/api/submissions/${id}/decide`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision:d,reviewer:"pastor",edited_text:d==="edited"?$("e"+id).value:"",save_ruling:!!pat,claim_pattern:pat,note:$("n"+id).value})});loadQueue();loadRulings()}
+async function loadRulings(){const r=await j(`/api/churches/${$("church").value}/rulings`);
+ $("rulings").innerHTML=r.length?r.map(x=>`<div class="card"><b>${esc(x.claim_pattern)}</b> → ${esc(x.decision)}<div class="mut">${esc(x.pastor_note)}</div>
+ <button onclick="delR(${x.id})">Remove</button></div>`).join(""):"No rulings yet."}
+async function delR(id){await j("/api/rulings/"+id,{method:"DELETE"});loadRulings()}
+$("church").onchange=()=>{loadQueue();loadDrafts();loadRulings()};
 async function loadDrafts(){const cs=await j(`/api/churches/${$("church").value}/commitments`);const d=cs.filter(c=>c.status==="draft");
  $("drafts").innerHTML=d.map(c=>`<div class="card"><textarea id="c${c.id}" style="min-height:60px">${esc(c.text)}</textarea>
  <div class="mut">${esc(c.topic)}${c.source_excerpt?" · source: “"+esc(c.source_excerpt)+"”":" · no verified source excerpt"}</div>

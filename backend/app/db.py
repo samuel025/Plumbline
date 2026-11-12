@@ -38,6 +38,10 @@ def init():
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
     with session() as c:
         c.executescript(SCHEMA)
+        try:  # lightweight migration for databases created before edited_text existed
+            c.execute("ALTER TABLE verdict ADD COLUMN edited_text TEXT")
+        except sqlite3.OperationalError:
+            pass
 
 def rows(cur):
     return [dict(r) for r in cur.fetchall()]

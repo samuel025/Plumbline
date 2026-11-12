@@ -24,6 +24,7 @@ class DecideIn(BaseModel):
     note: str = ""
     save_ruling: bool = False
     claim_pattern: str = ""
+    edited_text: str = ""
 
 class CommitmentIn(BaseModel):
     church_id: int
@@ -103,11 +104,23 @@ def check(b: SubmitIn):
         sid = cur.lastrowid
     return pipeline.run(sid)
 
+@app.get("/api/churches/{cid}/rulings")
+def rulings(cid: int):
+    with db.session() as c:
+        return db.rows(c.execute("SELECT * FROM ruling WHERE church_id=? ORDER BY id DESC", (cid,)))
+
+@app.delete("/api/rulings/{id}")
+def delete_ruling(id: int):
+    with db.session() as c:
+        c.execute("DELETE FROM ruling WHERE id=?", (id,))
+        db.audit(c, "pastor", "delete_ruling", f"ruling:{id}")
+    return {"ok": True}
+
 @app.get("/api/queue")
 def queue(church_id: int):
     with db.session() as c:
         return db.rows(c.execute(
-            """SELECT s.id, s.content_type, substr(s.raw_text,1,200) AS preview, v.status, v.reasons
+            """SELECT s.id, s.content_type, s.raw_text, substr(s.raw_text,1,200) AS preview, v.status, v.reasons
                FROM submission s JOIN verdict v ON v.submission_id=s.id
                WHERE s.church_id=? AND v.status IN ('needs_review','blocked') AND v.final_status IS NULL""", (church_id,)))
 
@@ -119,8 +132,8 @@ def decide(sid: int, b: DecideIn):
         row = c.execute("SELECT church_id FROM submission WHERE id=?", (sid,)).fetchone()
         if not row:
             raise HTTPException(404)
-        c.execute("UPDATE verdict SET final_status=?, reviewer=?, decided_at=CURRENT_TIMESTAMP WHERE submission_id=?",
-                  (b.decision, b.reviewer, sid))
+        c.execute("UPDATE verdict SET final_status=?, reviewer=?, edited_text=?, decided_at=CURRENT_TIMESTAMP WHERE submission_id=?",
+                  (b.decision, b.reviewer, b.edited_text or None, sid))
         if b.save_ruling and b.claim_pattern:
             c.execute("INSERT INTO ruling(church_id,claim_pattern,decision,pastor_note) VALUES(?,?,?,?)",
                       (row["church_id"], b.claim_pattern, b.decision, b.note))
