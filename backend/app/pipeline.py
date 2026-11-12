@@ -57,6 +57,9 @@ def run(submission_id: int) -> dict:
         if ref not in seen:
             r = bible.check(ref, None); r["claim_index"] = None
             scripture.append(r)
+    # Scriptural/factual claims are covered by the Scripture check; the statement of faith being silent on them is not a doubt.
+    findings = [f for f in findings if not (f.get("label") == "silent" and isinstance(f.get("claim_index"), int)
+                and 0 <= f["claim_index"] < len(claims) and claims[f["claim_index"]].get("kind") in ("scriptural", "factual"))]
     # Unjudged doctrinal claims must not slip through as approved.
     judged = {f.get("claim_index") for f in findings}
     for i, cl in enumerate(claims):
