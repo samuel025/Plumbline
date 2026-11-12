@@ -23,3 +23,25 @@ def test_uncertainty_never_approves():
 
 def test_crisis_blocks():
     assert decide([{"text": "I want to die", "kind": "pastoral_advice", "risk": "crisis"}], [], [], [], True, True)[0] == "blocked"
+
+def test_excerpt_must_appear_in_statement():
+    from app.commitments import verify_excerpt
+    src = "We believe in one God,\n eternally existing in three persons."
+    assert verify_excerpt("one God, eternally existing", src)
+    assert not verify_excerpt("God is a force", src)
+    assert not verify_excerpt("", src)
+
+def test_extract_makes_drafts_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("PLUMBLINE_DB", str(tmp_path / "t.db"))
+    import importlib
+    from app import db, commitments
+    importlib.reload(db); importlib.reload(commitments)
+    db.init()
+    with db.session() as c:
+        c.execute("INSERT INTO church(name) VALUES('x')")
+    monkeypatch.setattr(commitments.llm, "call_json", lambda *a, **k: {"commitments": [
+        {"text": "God is one in three persons.", "topic": "trinity", "source_excerpt": "one God"},
+        {"text": "Invented belief.", "topic": "x", "source_excerpt": "not in text"}]})
+    out = commitments.extract(1, "We believe in one God, three persons.")
+    assert [o["status"] for o in out] == ["draft", "draft"]
+    assert [o["excerpt_verified"] for o in out] == [True, False]

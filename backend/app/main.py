@@ -2,7 +2,7 @@ import json
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from . import db, pipeline
+from . import db, pipeline, commitments as commitments_mod, llm
 import os
 
 app = FastAPI(title="Plumbline")
@@ -35,6 +35,46 @@ class CommitmentIn(BaseModel):
 def churches():
     with db.session() as c:
         return db.rows(c.execute("SELECT * FROM church"))
+
+class ChurchIn(BaseModel):
+    name: str
+    tradition: str = ""
+    tone_guide: str = ""
+
+class StatementIn(BaseModel):
+    text: str
+
+class CommitmentEdit(BaseModel):
+    text: str
+    topic: str = ""
+
+@app.post("/api/churches")
+def create_church(b: ChurchIn):
+    with db.session() as c:
+        cur = c.execute("INSERT INTO church(name,tradition,tone_guide) VALUES(?,?,?)", (b.name, b.tradition, b.tone_guide))
+        return {"id": cur.lastrowid}
+
+@app.post("/api/churches/{cid}/statement")
+def upload_statement(cid: int, b: StatementIn):
+    """Extract DRAFT commitments from a statement of faith for a pastor to edit and approve."""
+    if len(b.text.strip()) < 40:
+        raise HTTPException(400, "Statement of faith is too short")
+    try:
+        return commitments_mod.extract(cid, b.text)
+    except llm.LLMUnavailable as e:
+        raise HTTPException(503, f"Model unavailable: {e}")
+
+@app.put("/api/commitments/{id}")
+def edit_commitment(id: int, b: CommitmentEdit):
+    with db.session() as c:
+        c.execute("UPDATE commitment SET text=?, topic=?, version=version+1, status='draft' WHERE id=?", (b.text, b.topic, id))
+    return {"id": id, "status": "draft"}  # an edit sends it back to draft until re-approved
+
+@app.delete("/api/commitments/{id}")
+def delete_commitment(id: int):
+    with db.session() as c:
+        c.execute("DELETE FROM commitment WHERE id=?", (id,))
+    return {"ok": True}
 
 @app.get("/api/churches/{cid}/commitments")
 def commitments(cid: int):
