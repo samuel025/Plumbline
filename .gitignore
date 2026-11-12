@@ -2,3 +2,4 @@
 .venv/
 __pycache__/
 data/plumbline.db
+removed_queue_items.md
