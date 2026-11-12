@@ -8,7 +8,16 @@ def cause_text(err: str) -> str:
     e = (err or "").lower()
     if "not set" in e or "set gemini" in e:
         return "No model API key is configured."
-    if "429" in e or "quota" in e or "out of daily" in e:
+    if "keys:" in e:
+        tried = [t for t in e.split("keys:", 1)[1].split(";") if "skipped" not in t]
+        if tried and all("daily limit" in t for t in tried):
+            return "Every API key has reached its daily limit."
+        if any("rate limited" in t for t in tried):
+            return "The model is rate limited right now."
+        if any("overloaded" in t for t in tried):
+            return "The model is overloaded right now."
+        return "No API key could reach a working model."
+    if "429" in e or "quota" in e:
         return "The model's usage limit was reached."
     if "503" in e or "overload" in e or "high demand" in e:
         return "The model was overloaded."
@@ -17,6 +26,12 @@ def cause_text(err: str) -> str:
     if any(k in e for k in ("not an object", "json", "expecting", "delimiter", "unterminated", "decode", "candidates", "keyerror", "list index")):
         return "The model returned an unreadable answer."
     return "The model could not be reached."
+
+def cause_detail(err: str) -> str:
+    """The per-key breakdown, e.g. 'key 1 · gemini-3.5-flash-lite: daily limit reached; key 2 · ...: overloaded'."""
+    if "KEYS:" not in (err or ""):
+        return ""
+    return " Tried: " + "; ".join(t.strip() for t in err.split("KEYS:", 1)[1].split(";") if "skipped" not in t) + "."
 
 def _flag(kind, severity, title, claim="", detail="", source="", fix=""):
     return {"kind": kind, "severity": severity, "title": title, "claim": claim, "detail": detail, "source": source, "fix": fix}
@@ -28,7 +43,7 @@ def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_p
     flags = []
     if not llm_ok:
         flags.append(_flag("model_unavailable", "review", "The doctrine judge could not run",
-            detail=f"{cause_text(llm_error)} Plumbline never approves what it could not judge, so this was sent to a pastor.",
+            detail=f"{cause_text(llm_error)}{cause_detail(llm_error)} Plumbline never approves what it could not judge, so this was sent to a pastor.",
             source="Safety rule: doubt never approves",
             fix="Press “Check again” once the model is available, or decide it yourself."))
     if not claims and llm_ok:

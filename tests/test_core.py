@@ -84,3 +84,11 @@ def test_recheck_replaces_instead_of_duplicating(tmp_path, monkeypatch):
     with db.session() as c:
         assert c.execute("SELECT COUNT(*) FROM verdict").fetchone()[0] == 1
         assert c.execute("SELECT COUNT(*) FROM scripture_check").fetchone()[0] == 1
+
+def test_cause_names_which_keys_failed():
+    from app.verdict import cause_text, cause_detail
+    err = "KEYS: key 1 · m: daily limit reached; key 2 · m: overloaded"
+    assert cause_text(err) == "The model is overloaded right now."
+    assert "key 2" in cause_detail(err) and "daily limit" in cause_detail(err)
+    both = "KEYS: key 1 · m: daily limit reached; key 2 · m: daily limit reached"
+    assert cause_text(both) == "Every API key has reached its daily limit."

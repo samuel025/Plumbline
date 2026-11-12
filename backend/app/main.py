@@ -209,7 +209,8 @@ def health():
     live = [(ki, m) for ki in range(len(keys)) for m in llm.GEMINI_MODELS if llm._dead.get((ki, m), 0) <= time.time()]
     recent_fail = llm._last_fail > llm._last_ok and time.time() - llm._last_fail < 1800
     state = "offline" if not (keys or has_anthropic) else ("limited" if (not live or recent_fail) else "online")
-    return {"judge": state, "keys": len(keys), "models": llm.GEMINI_MODELS}
+    return {"judge": state, "keys": len(keys), "models": llm.GEMINI_MODELS, "key_states": llm.key_states(),
+            "last_trail": llm._last_trail}
 
 @app.get("/api/audit")
 def audit_log(limit: int = 60):

@@ -33,35 +33,59 @@ def _parse(text: str) -> dict:
 
 _last_ok = 0.0    # time of the last successful model call
 _last_fail = 0.0  # time of the last failed one
-_dead: dict = {}  # (key index, model) -> time until which we skip it (daily quota exhausted)
+_dead: dict = {}       # (key index, model) -> time until which we skip it (daily quota exhausted)
+_dead_note: dict = {}  # (key index, model) -> "resets in 9h43m" (from the API's own message)
+_last_trail: list = []  # what the most recent model call tried, per key and model
 
 def _gemini_keys() -> list[str]:
     names = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY{i}" for i in range(2, 6)]
     return [os.environ[n] for n in names if os.environ.get(n)]
 
+def _label(r) -> str:
+    t = r.text
+    if r.status_code == 200: return "ok"
+    if r.status_code == 429: return "daily limit reached" if "PerDay" in t else "rate limited"
+    if r.status_code == 503: return "overloaded"
+    if r.status_code == 404: return "model not available"
+    return f"error {r.status_code}"
+
+def key_states() -> list[dict]:
+    """Per-key status for the health badge, from what recent calls learned."""
+    out = []
+    for ki in range(len(_gemini_keys())):
+        dead = [(m, _dead_note.get((ki, m), "")) for m in GEMINI_MODELS if _dead.get((ki, m), 0) > time.time()]
+        out.append({"key": ki + 1, "state": "daily limit reached" if dead else "available",
+                    "detail": dead[0][1] if dead else ""})
+    return out
+
 def _gemini(keys: list[str], system: str, user: str, max_tokens: int) -> dict:
-    """Try each key x model. A daily-quota 429 retires that pair for 30 minutes; other 429/503 get short retries."""
-    last = None
+    """Try each model x key. A daily-quota 429 retires that pair for 30 minutes; other 429/503 get short retries."""
+    global _last_trail
+    trail, last = [], None
     for model in GEMINI_MODELS:
         for ki, key in enumerate(keys):
             if _dead.get((ki, model), 0) > time.time():
+                trail.append(f"key {ki+1} · {model}: skipped (daily limit reached earlier)")
                 continue
             for attempt in range(3):
                 r = _post(key, model, system, user, max_tokens)
                 if r.status_code == 429 and "PerDay" in r.text:
                     _dead[(ki, model)] = time.time() + 1800
+                    m = re.search(r"retry in ([0-9hms.]+)", r.text)
+                    _dead_note[(ki, model)] = ("resets in " + re.sub(r"\.\d+s", "s", m.group(1))) if m else ""
                     break
                 if r.status_code not in (429, 503):
                     break
                 time.sleep(float(r.headers.get("retry-after", 0)) or 3 * (attempt + 1))
+            trail.append(f"key {ki+1} · {model}: {_label(r)}")
             if r.status_code in (404, 429, 503):
                 last = r
                 continue
             r.raise_for_status()
+            _last_trail = trail
             return _parse(r.json()["candidates"][0]["content"]["parts"][0]["text"])
-    if last is None:
-        raise RuntimeError("all Gemini keys/models are out of daily quota")
-    last.raise_for_status()
+    _last_trail = trail
+    raise RuntimeError("KEYS: " + "; ".join(trail))
 
 def _post(key, model, system, user, max_tokens):
     return httpx.post(

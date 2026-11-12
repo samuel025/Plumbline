@@ -312,7 +312,8 @@ function drawNav(pending){const cur=route();
 async function refreshPending(){try{const s=await api(`/api/churches/${cid()}/stats`);window._pending=s.pending;drawNav(s.pending);return s}catch{return null}}
 const HEALTH={online:["online","Judge online","Claims are checked live."],limited:["limited","Judge limited","Model quota hit. Checks are routed to a pastor, never auto-approved."],offline:["offline","Judge offline","No model key set. Everything routes to a pastor."]};
 async function loadHealth(){try{const h=await api("/api/health");const[k,t,d]=HEALTH[h.judge]||HEALTH.offline;
-  $("#model").innerHTML=`<b><span class="dot ${k}"></span>${t}</b>${d}`;
+  const ks=(h.key_states||[]).map(x=>`<div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span style="white-space:nowrap">Key ${x.key}</span><span style="text-align:right;color:${x.state==="available"?"#8fd1a8":"#e8b36a"}">${x.state}${x.detail?"<br>"+esc(x.detail.replace(/\.$/,"")):""}</span></div>`).join("");
+  $("#model").innerHTML=`<b><span class="dot ${k}"></span>${t}</b>${d}<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1);font-size:12px">${ks}</div>`;
   $("#topstatus").innerHTML=`<span class="dot ${k}" style="margin-right:8px"></span>${t}`}catch{}}
 
 /* ---------- charts ---------- */
