@@ -92,3 +92,11 @@ def test_cause_names_which_keys_failed():
     assert "key 2" in cause_detail(err) and "daily limit" in cause_detail(err)
     both = "KEYS: key 1 · m: daily limit reached; key 2 · m: daily limit reached"
     assert cause_text(both) == "Every API key has reached its daily limit."
+
+def test_parser_ignores_trailing_text_and_second_object():
+    from app.llm import _parse
+    assert _parse('Here you go:\n```json\n{"a": 1}\n```\nHope that helps {not json}') == {"a": 1}
+    assert _parse('{"findings": []}\n{"extra": true}') == {"findings": []}
+    import pytest
+    with pytest.raises(ValueError):
+        _parse('[1, 2, 3]')

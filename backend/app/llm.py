@@ -1,7 +1,14 @@
 """LLM wrapper: Gemini (GEMINI_API_KEY) or Anthropic (ANTHROPIC_API_KEY).
 Any failure raises LLMUnavailable; the pipeline then routes the item to a pastor."""
-import json, os, re, time
+import json, logging, os, re, time
 import httpx
+
+log = logging.getLogger("plumbline.llm")
+
+# A stalled free-tier request is almost always stuck for good (observed: 46s spikes, normal is 1-3s),
+# so give up quickly and retry instead of waiting a long time once.
+TIMEOUT = float(os.environ.get("PLUMBLINE_LLM_TIMEOUT", "20"))
+ATTEMPTS = 3
 
 # Tried in order; a model that stays rate-limited or unavailable falls through to the next.
 GEMINI_MODELS = os.environ.get("PLUMBLINE_GEMINI_MODEL", "gemini-3.5-flash-lite,gemini-3.8-flash,gemini-2.5-flash").split(",")
@@ -25,8 +32,11 @@ class LLMUnavailable(Exception):
     pass
 
 def _parse(text: str) -> dict:
-    m = re.search(r"\{.*\}", text, re.S)
-    data = json.loads(m.group(0) if m else text)
+    """Take the FIRST complete JSON object in the text, ignoring any chatter or a second object after it."""
+    i = text.find("{")
+    if i < 0:
+        raise ValueError("model returned no JSON object")
+    data, _ = json.JSONDecoder().raw_decode(text[i:])
     if not isinstance(data, dict):
         raise ValueError("model returned JSON that is not an object")
     return data
@@ -95,7 +105,7 @@ def _post(key, model, system, user, max_tokens):
               "contents": [{"role": "user", "parts": [{"text": user}]}],
               "generationConfig": {"responseMimeType": "application/json", "temperature": 0,
                                    "maxOutputTokens": max_tokens}},
-        timeout=60)
+        timeout=TIMEOUT)
 
 def _anthropic(key: str, system: str, user: str, max_tokens: int) -> dict:
     import anthropic
@@ -111,12 +121,14 @@ def call_json(system: str, user: str, max_tokens: int = 4000) -> dict:
         raise LLMUnavailable("Set GEMINI_API_KEY or ANTHROPIC_API_KEY")
     global _last_ok, _last_fail
     last = None
-    for _ in range(2):  # one retry covers a malformed or transient response
+    for _ in range(ATTEMPTS):  # retries cover a stalled, malformed or transient response
         try:
             out = _gemini(gk, system, user, max_tokens) if gk else _anthropic(ak, system, user, max_tokens)
             _last_ok = time.time()
             return out
         except Exception as e:
             last = e
+            log.warning("model call failed: %s: %s", type(e).__name__, str(e)[:300])
     _last_fail = time.time()
-    raise LLMUnavailable(str(last)) from last
+    # include the exception class: some (e.g. httpx timeouts) have an empty message
+    raise LLMUnavailable(f"{type(last).__name__}: {last}") from last
