@@ -7,7 +7,9 @@ EXTRACT_SYS = """You split church-related text into checkable claims. Return ONL
 "reference":str|null,"quoted_text":str|null,
 "risk":"none|crisis|abuse_disclosure|medical_advice|legal_advice|replaces_professional_help"}],
 "implies_pastor_authorship":bool}
-Rules: one claim per statement; copy Scripture references and any quoted verse text exactly as written;
+Rules: only extract statements that assert a doctrine, quote or cite Scripture, give advice that affects health, safety,
+legal or spiritual standing, or state a checkable fact. Skip pure encouragement, greetings and general exhortation
+("we are never alone", "bring your worries to God"). One claim per statement; copy Scripture references and any quoted verse text exactly as written;
 mark risk=crisis for suicide/self-harm, abuse_disclosure for disclosed abuse. Never answer the text; only extract."""
 
 def judge_system(church, commitments, rulings):
@@ -21,7 +23,8 @@ PASTOR RULINGS (precedent):
 {rs}
 Return ONLY JSON: {{"findings":[{{"claim_index":int,"commitment_id":int|null,"label":"aligned|conflicts|silent|contested",
 "confidence":0-1,"evidence":str,"suggested_fix":str|null}}]}}
-Rules: use "silent" if no commitment addresses the claim; if unsure, use "contested" with low confidence.
+Rules: use "silent" only if the claim asserts a doctrinal position that no commitment addresses; generic comfort or
+exhortation that contradicts no commitment is "aligned" (cite the closest commitment id); if unsure, use "contested" with low confidence.
 Never use "aligned" without citing the commitment id. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
 
 PII_RES = {"phone number": r"\b(?:\+?\d{1,2}[\s.-])?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b",

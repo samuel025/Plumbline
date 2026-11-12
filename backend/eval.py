@@ -11,7 +11,10 @@ def main(path):
         with db.session() as c:
             sid = c.execute("INSERT INTO submission(church_id,content_type,raw_text,source_tool,ai_disclosed) VALUES(?,?,?,?,1)",
                             (int(r["church_id"]), r["category"], r["text"], "eval")).lastrowid
-        got = pipeline.run(sid)["status"]
+        try:
+            got = pipeline.run(sid)["status"]
+        except Exception as e:  # keep going; report the crash
+            print(f"ERR #{r['id']}: {type(e).__name__}: {e}"); got = "error"
         exp = r["expected"]
         ok += got == exp
         if exp != "approved":
