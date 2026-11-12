@@ -31,19 +31,36 @@ def _parse(text: str) -> dict:
         raise ValueError("model returned JSON that is not an object")
     return data
 
-def _gemini(key: str, system: str, user: str, max_tokens: int) -> dict:
+_last_ok = 0.0    # time of the last successful model call
+_last_fail = 0.0  # time of the last failed one
+_dead: dict = {}  # (key index, model) -> time until which we skip it (daily quota exhausted)
+
+def _gemini_keys() -> list[str]:
+    names = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY{i}" for i in range(2, 6)]
+    return [os.environ[n] for n in names if os.environ.get(n)]
+
+def _gemini(keys: list[str], system: str, user: str, max_tokens: int) -> dict:
+    """Try each key x model. A daily-quota 429 retires that pair for 30 minutes; other 429/503 get short retries."""
     last = None
     for model in GEMINI_MODELS:
-        for attempt in range(3):
-            r = _post(key, model, system, user, max_tokens)
-            if r.status_code not in (429, 503):
-                break
-            time.sleep(float(r.headers.get("retry-after", 0)) or min(10 * 2 ** attempt, 40))
-        if r.status_code in (404, 429, 503):  # unknown model or still limited: next model
-            last = r
-            continue
-        r.raise_for_status()
-        return _parse(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+        for ki, key in enumerate(keys):
+            if _dead.get((ki, model), 0) > time.time():
+                continue
+            for attempt in range(3):
+                r = _post(key, model, system, user, max_tokens)
+                if r.status_code == 429 and "PerDay" in r.text:
+                    _dead[(ki, model)] = time.time() + 1800
+                    break
+                if r.status_code not in (429, 503):
+                    break
+                time.sleep(float(r.headers.get("retry-after", 0)) or 3 * (attempt + 1))
+            if r.status_code in (404, 429, 503):
+                last = r
+                continue
+            r.raise_for_status()
+            return _parse(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+    if last is None:
+        raise RuntimeError("all Gemini keys/models are out of daily quota")
     last.raise_for_status()
 
 def _post(key, model, system, user, max_tokens):
@@ -65,13 +82,17 @@ def _anthropic(key: str, system: str, user: str, max_tokens: int) -> dict:
     return _parse("".join(b.text for b in resp.content if b.type == "text"))
 
 def call_json(system: str, user: str, max_tokens: int = 4000) -> dict:
-    gk, ak = os.environ.get("GEMINI_API_KEY"), os.environ.get("ANTHROPIC_API_KEY")
+    gk, ak = _gemini_keys(), os.environ.get("ANTHROPIC_API_KEY")
     if not (gk or ak):
         raise LLMUnavailable("Set GEMINI_API_KEY or ANTHROPIC_API_KEY")
+    global _last_ok, _last_fail
     last = None
     for _ in range(2):  # one retry covers a malformed or transient response
         try:
-            return _gemini(gk, system, user, max_tokens) if gk else _anthropic(ak, system, user, max_tokens)
+            out = _gemini(gk, system, user, max_tokens) if gk else _anthropic(ak, system, user, max_tokens)
+            _last_ok = time.time()
+            return out
         except Exception as e:
             last = e
+    _last_fail = time.time()
     raise LLMUnavailable(str(last)) from last

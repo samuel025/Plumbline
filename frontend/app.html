@@ -10,165 +10,252 @@
 <style>
 :root{
   --ink:#1b0624; --espresso:#160f0c; --ash:#766a7c; --graphite:#444; --stone:#898683;
-  --linen:#f7f7f5; --paper:#fff; --bone:#edece7; --mist:#eee; --line:rgba(0,0,0,.08);
-  --ring:inset 0 0 0 1px rgba(0,0,0,.07);
-  --ok:#3f6b4f; --ok-bg:#e8f0ea; --warn:#a8741a; --warn-bg:#f6eedd; --bad:#9b2c2c; --bad-bg:#f6e4e2;
+  --linen:#f7f7f5; --paper:#fff; --bone:#edece7; --mist:#eee; --line:rgba(27,6,36,.08); --line2:rgba(27,6,36,.14);
+  --ring:0 0 0 1px rgba(27,6,36,.07);
+  --lift:0 1px 2px rgba(27,6,36,.04),0 8px 24px -12px rgba(27,6,36,.12);
+  --ok:#3f6b4f; --ok-bg:#e6f0e9; --warn:#b07a1c; --warn-bg:#f8efdb; --bad:#a23333; --bad-bg:#f7e4e1;
+  --sun:linear-gradient(120deg,#fcefe4 0%,#f8d6c3 45%,#f0aa97 100%);
+  --side:#160f0c;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--linen);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-  font-feature-settings:"cv11","tnum";-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--linen);color:var(--ink);font:14.5px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-feature-settings:"cv11","tnum";-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:inherit}
+svg{display:block}
 
-/* shell */
-.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
-.side{background:var(--paper);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.02em;padding:0 8px}
-.mark{width:12px;height:24px}
-.church{background:var(--linen);border-radius:12px;padding:10px 12px;box-shadow:var(--ring)}
-.church label{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--stone);margin-bottom:2px}
-.church select{width:100%;border:0;background:transparent;font-weight:500;font-size:14px;outline:none;cursor:pointer;padding:2px 0}
-nav{display:flex;flex-direction:column;gap:2px}
-nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;text-decoration:none;color:var(--graphite);font-weight:500;font-size:14px}
-nav a:hover{background:var(--linen)}
-nav a.on{background:var(--espresso);color:#fff}
-nav a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-nav .count{margin-left:auto;background:var(--warn);color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:1px 8px}
-nav a.on .count{background:#fff;color:var(--espresso)}
-.side .foot{margin-top:auto;font-size:12px;line-height:1.5;color:var(--stone);padding:0 8px}
-.main{padding:36px 44px 80px;max-width:1180px;width:100%}
-@media(max-width:900px){
+/* ===== shell ===== */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.side{background:var(--side);color:#d8d2cb;padding:18px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.02em;padding:4px 10px;color:#fff;text-decoration:none}
+.brand svg{width:12px;height:24px}
+.church{background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.church label{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8d8580;margin-bottom:2px}
+.church select{width:100%;border:0;background:transparent;font-weight:500;font-size:14px;outline:none;cursor:pointer;color:#fff;padding:2px 0}
+.church select option{color:#111}
+.navgroup{display:flex;flex-direction:column;gap:2px}
+.navlabel{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:#7d756f;padding:6px 12px 6px}
+.navgroup a{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:10px;text-decoration:none;color:#c9c2bb;font-weight:500;font-size:14px;transition:background .12s}
+.navgroup a:hover{background:rgba(255,255,255,.06);color:#fff}
+.navgroup a.on{background:rgba(255,255,255,.1);color:#fff}
+.navgroup a.on::before{content:"";position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:linear-gradient(#f4a07a,#e7788a)}
+.navgroup a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.count{margin-left:auto;background:#e7788a;color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:1px 8px}
+.side .foot{margin-top:auto;display:flex;flex-direction:column;gap:12px}
+.model{border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);font-size:12.5px;line-height:1.45}
+.model b{display:flex;align-items:center;gap:8px;color:#fff;font-weight:500;margin-bottom:3px}
+.dot{width:8px;height:8px;border-radius:50%;background:#8d8580;display:inline-block;flex:none}
+.dot.online{background:#5fb27f;box-shadow:0 0 0 3px rgba(95,178,127,.2)}.dot.limited{background:#e0a23a;box-shadow:0 0 0 3px rgba(224,162,58,.2)}.dot.offline{background:#d25c5c;box-shadow:0 0 0 3px rgba(210,92,92,.2)}
+.me{display:flex;align-items:center;gap:10px;padding:6px 8px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--sun);color:var(--ink);display:grid;place-items:center;font-weight:600;font-size:13px;flex:none}
+.me small{display:block;color:#8d8580;font-size:12px;line-height:1.2}
+.fine{font-size:11.5px;line-height:1.5;color:#7d756f;padding:0 8px}
+
+.col{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:10;background:rgba(247,247,245,.85);backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 40px;height:64px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ash);white-space:nowrap}
+.crumb b{color:var(--ink);font-weight:500}
+.search{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:260px;background:var(--paper);box-shadow:var(--ring);border:0;border-radius:999px;padding:8px 14px;color:var(--stone);cursor:pointer;font-size:13.5px}
+.search:hover{box-shadow:0 0 0 1px var(--line2)}
+.search kbd{margin-left:auto;font:11px ui-monospace,Menlo,monospace;background:var(--bone);border-radius:6px;padding:1px 7px;color:var(--ash)}
+.search svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round}
+.pill-status{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 12px;border-radius:999px;background:var(--paper);box-shadow:var(--ring);white-space:nowrap}
+.page{padding:32px 40px 96px;max-width:1280px;width:100%}
+@media(max-width:1000px){
   .app{grid-template-columns:1fr}
-  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;gap:10px}
-  .side .foot{display:none}
-  nav{flex-direction:row;overflow-x:auto;width:100%}
-  nav a{white-space:nowrap}
-  .church{flex:1;min-width:180px}
-  .main{padding:24px 16px 80px}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 12px;gap:8px}
+  .side .foot,.navlabel{display:none}
+  .navgroup{flex-direction:row;overflow-x:auto;width:100%}
+  .navgroup a{white-space:nowrap}.navgroup a.on::before{display:none}
+  .church{flex:1;min-width:200px}
+  .topbar{padding:0 16px}.page{padding:24px 16px 80px}.search{min-width:0;margin-left:0;flex:1}.crumb,.pill-status{display:none}
 }
 
-/* type + page header */
-.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
-h1{font-weight:400;font-size:40px;line-height:1.05;letter-spacing:-.05em;margin:0}
-.sub{color:var(--ash);margin:8px 0 0;max-width:46em}
-h2{font-weight:500;font-size:17px;letter-spacing:-.01em;margin:0 0 14px}
+/* ===== type ===== */
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+h1{font-weight:400;font-size:34px;line-height:1.08;letter-spacing:-.045em;margin:0}
+.sub{color:var(--ash);margin:8px 0 0;max-width:46em;font-size:15px}
+h2{font-weight:500;font-size:15.5px;letter-spacing:-.01em;margin:0}
 h3{font-weight:500;font-size:14px;margin:0 0 6px}
 .mut{color:var(--ash);font-size:13px}
-.eyebrow{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--stone);font-weight:500}
+.eyebrow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);font-weight:500}
 
-/* controls */
-.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 20px;border:1px solid var(--espresso);background:var(--espresso);color:#fff;cursor:pointer;font-size:14px;font-weight:500;text-decoration:none;transition:opacity .15s}
-.btn:hover{opacity:.85}.btn:disabled{opacity:.4;cursor:default}
-.btn.ghost{background:transparent;color:var(--ink);border-color:#cfcdc8}
+/* ===== controls ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:9px 18px;border:1px solid var(--espresso);background:var(--espresso);color:#fff;cursor:pointer;font-size:13.5px;font-weight:500;text-decoration:none;transition:opacity .15s,transform .05s;white-space:nowrap}
+.btn:hover{opacity:.86}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--line2)}
 .btn.ghost:hover{background:var(--bone);opacity:1}
-.btn.sm{padding:5px 14px;font-size:13px}
-.btn.danger{color:var(--bad);border-color:#e0c3c0;background:transparent}
+.btn.sm{padding:5px 13px;font-size:12.5px}
+.btn.danger{color:var(--bad);border-color:#e3c4c0;background:var(--paper)}
+.btn.light{background:#fff;color:var(--ink);border-color:#fff}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .spread{display:flex;justify-content:space-between;align-items:center;gap:12px}
-textarea,input[type=text],input:not([type]),select.f{width:100%;padding:11px 14px;border:1px solid #cfcdc8;border-radius:10px;background:var(--paper);outline:none;font-size:15px}
-textarea{min-height:170px;resize:vertical;line-height:1.55}
+textarea,input[type=text],input:not([type]),select.f{width:100%;padding:10px 13px;border:1px solid var(--line2);border-radius:10px;background:var(--paper);outline:none;font-size:14.5px;transition:border-color .12s,box-shadow .12s}
+textarea{min-height:170px;resize:vertical;line-height:1.6}
 textarea.sm{min-height:76px}
-textarea:focus,input:focus,select.f:focus{border-color:var(--espresso)}
+textarea:focus,input:focus,select.f:focus{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(22,15,12,.07)}
 ::placeholder{color:var(--stone)}
 .field{margin-bottom:14px}
-.field>label{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
-.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--graphite);cursor:pointer}
-.check input{width:17px;height:17px;margin-top:3px;accent-color:var(--espresso)}
+.field>label{display:block;font-size:12.5px;font-weight:500;margin-bottom:6px;color:var(--graphite)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--graphite);cursor:pointer}
+.check input{width:16px;height:16px;margin-top:3px;accent-color:var(--espresso)}
+.seg{display:inline-flex;background:var(--bone);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:5px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;color:var(--graphite)}
+.seg button.on{background:var(--paper);box-shadow:var(--ring);color:var(--ink);font-weight:500}
 
-/* surfaces */
-.card{background:var(--paper);box-shadow:var(--ring);border-radius:16px;padding:22px}
+/* ===== surfaces ===== */
+.card{background:var(--paper);box-shadow:var(--ring),var(--lift);border-radius:16px;padding:20px}
+.card.flat{box-shadow:var(--ring)}
 .card+.card{margin-top:16px}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
 .grid{display:grid;gap:16px}
 .g4{grid-template-columns:repeat(4,1fr)}
 .g2{grid-template-columns:1fr 1fr}
+.g32{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .split{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}
-.mdl{grid-template-columns:340px minmax(0,1fr);align-items:start}
-@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.split,.mdl,.g2{grid-template-columns:1fr}}
-.stat{padding:20px 22px}
-.stat .n{font-size:46px;line-height:1;letter-spacing:-.06em;margin:10px 0 4px;font-weight:400}
-.stat .d{font-size:13px;color:var(--ash)}
-.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--bone);margin-top:14px}
-.bar i{display:block;height:100%}
+.mdl{grid-template-columns:350px minmax(0,1fr);align-items:start}
+@media(max-width:1180px){.g4{grid-template-columns:repeat(2,1fr)}.split,.mdl,.g2,.g32{grid-template-columns:1fr}}
+.grid>.card+.card{margin-top:0}
 
-/* chips, badges */
+/* banner */
+.banner{position:relative;overflow:hidden;border-radius:20px;background:var(--sun);padding:28px 32px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;box-shadow:var(--ring)}
+.banner h1{font-size:30px}
+.banner p{margin:6px 0 0;color:#5a3a46;max-width:34em}
+.banner svg.art{position:absolute;right:0;bottom:0;height:100%;opacity:.55;pointer-events:none}
+.banner>*{position:relative}
+
+/* kpi */
+.kpi{padding:18px 20px 12px;display:flex;flex-direction:column}
+.kpi .top{display:flex;justify-content:space-between;align-items:center}
+.kpi .n{font-size:38px;line-height:1;letter-spacing:-.055em;margin:12px 0 2px;font-weight:400}
+.kpi .d{font-size:12.5px;color:var(--ash)}
+.delta{font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--bone);color:var(--graphite)}
+.delta.up{background:var(--ok-bg);color:var(--ok)}.delta.down{background:var(--bad-bg);color:var(--bad)}
+.kpi svg.spark{margin-top:10px;width:100%;height:36px}
+
+/* charts */
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--ash)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.chart text{font:11px Inter,sans-serif;fill:#898683}
+.donutwrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donutlist{flex:1;min-width:130px}
+.donutlist div{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.donutlist div:first-child{border-top:0}
+.donutlist i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px}
+#tip{position:fixed;z-index:50;background:var(--espresso);color:#fff;font-size:12px;padding:6px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .1s;white-space:nowrap}
+
+/* badges + chips */
 .badge{display:inline-flex;align-items:center;gap:7px;padding:3px 11px 3px 9px;border-radius:999px;font-size:12px;font-weight:500;background:var(--bone);white-space:nowrap}
 .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--stone)}
-.badge.approved{background:var(--ok-bg);color:var(--ok)}.badge.approved::before{background:var(--ok)}
+.badge.approved,.badge.edited{background:var(--ok-bg);color:var(--ok)}.badge.approved::before,.badge.edited::before{background:var(--ok)}
 .badge.needs_review{background:var(--warn-bg);color:#7a5410}.badge.needs_review::before{background:var(--warn)}
-.badge.blocked{background:var(--bad-bg);color:var(--bad)}.badge.blocked::before{background:var(--bad)}
-.badge.rejected{background:var(--bad-bg);color:var(--bad)}.badge.rejected::before{background:var(--bad)}
-.badge.edited{background:var(--ok-bg);color:var(--ok)}.badge.edited::before{background:var(--ok)}
+.badge.blocked,.badge.rejected{background:var(--bad-bg);color:var(--bad)}.badge.blocked::before,.badge.rejected::before{background:var(--bad)}
 .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:var(--bone);color:var(--graphite);white-space:nowrap}
 .chip.warn{background:var(--warn-bg);color:#7a5410}.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.ok{background:var(--ok-bg);color:var(--ok)}
 
-/* list rows */
+/* lists + tables */
 .list{margin:0;padding:0;list-style:none}
-.list>li,.trow{padding:14px 0;border-top:1px solid var(--line)}
+.list>li{padding:14px 0;border-top:1px solid var(--line)}
 .list>li:first-child{border-top:0;padding-top:0}
-.item{display:block;width:100%;text-align:left;background:none;border:0;cursor:pointer;padding:14px 16px;border-radius:12px}
+.item{display:block;width:100%;text-align:left;background:none;border:0;cursor:pointer;padding:13px 14px;border-radius:12px;transition:background .12s}
 .item:hover{background:var(--linen)}
 .item.on{background:var(--linen);box-shadow:var(--ring)}
-.item .t{font-size:14px;line-height:1.45;margin:8px 0 0;color:var(--graphite);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-weight:500;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--stone);padding:0 12px 10px}
-td{padding:13px 12px;border-top:1px solid var(--line);vertical-align:top}
+.item .t{font-size:13.5px;line-height:1.45;margin:8px 0 0;color:var(--graphite);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:500;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:0 12px 10px}
+td{padding:12px;border-top:1px solid var(--line);vertical-align:top}
 tr.click{cursor:pointer}tr.click:hover td{background:var(--linen)}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.tab{border:1px solid #cfcdc8;background:transparent;border-radius:999px;padding:6px 16px;font-size:13px;cursor:pointer}
+.attn{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;padding:12px 8px;border-radius:12px;cursor:pointer}
+.attn:hover{background:var(--linen)}
+.attn .bar{width:3px;align-self:stretch;border-radius:3px;background:var(--warn);flex:none}
+.attn.blocked .bar{background:var(--bad)}
+.attn p{margin:0;font-size:13.5px;color:var(--graphite);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:5px 14px;font-size:12.5px;cursor:pointer}
 .tab.on{background:var(--espresso);color:#fff;border-color:var(--espresso)}
 
 /* result */
-.verdict{padding:22px;border-radius:14px;margin-bottom:18px}
+.verdict{padding:20px;border-radius:14px;margin-bottom:16px}
 .verdict.approved{background:var(--ok-bg)}.verdict.needs_review{background:var(--warn-bg)}.verdict.blocked{background:var(--bad-bg)}
-.verdict .w{font-size:34px;letter-spacing:-.05em;line-height:1.1;margin:10px 0 6px}
+.verdict .w{font-size:30px;letter-spacing:-.05em;line-height:1.1;margin:10px 0 6px}
 .verdict.approved .w{color:var(--ok)}.verdict.needs_review .w{color:#7a5410}.verdict.blocked .w{color:var(--bad)}
 .reasons{margin:12px 0 0;padding:0;list-style:none}
-.reasons li{padding:8px 0 8px 18px;position:relative;font-size:14px;color:var(--graphite);border-top:1px solid rgba(0,0,0,.06)}
-.reasons li::before{content:"";position:absolute;left:2px;top:17px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4}
+.reasons li{padding:8px 0 8px 18px;position:relative;font-size:13.5px;color:var(--graphite);border-top:1px solid rgba(0,0,0,.06)}
+.reasons li::before{content:"";position:absolute;left:2px;top:16px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4}
+.miniKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.miniKpis div{background:var(--linen);border-radius:12px;padding:10px 12px}
+.miniKpis b{display:block;font-size:22px;font-weight:400;letter-spacing:-.04em;line-height:1.2}
+.miniKpis span{font-size:11.5px;color:var(--ash)}
 .claim{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px}
-.claim .q{font-size:15px;margin:0 0 8px;letter-spacing:-.005em}
-.check-line{font-size:13px;color:var(--graphite);padding:8px 0 0;margin-top:8px;border-top:1px dashed var(--line)}
-.verse{font-size:13px;color:var(--ash);font-style:italic;margin-top:4px}
-blockquote{margin:0;padding:12px 16px;background:var(--linen);border-radius:10px;color:var(--graphite);font-size:14px;max-height:160px;overflow:auto;white-space:pre-wrap}
+.claim .q{font-size:14.5px;margin:0 0 8px}
+.check-line{font-size:13px;color:var(--graphite);padding:9px 0 0;margin-top:9px;border-top:1px dashed var(--line)}
+.verse{font-size:12.5px;color:var(--ash);font-style:italic;margin-top:4px}
+blockquote{margin:0;padding:12px 16px;background:var(--linen);border-radius:10px;color:var(--graphite);font-size:13.5px;max-height:150px;overflow:auto;white-space:pre-wrap}
 .decide{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
-.fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:13px}
+.fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12.5px}
 
-/* empty + misc */
-.empty{text-align:center;padding:48px 20px;color:var(--ash)}
+/* misc */
+.empty{text-align:center;padding:44px 20px;color:var(--ash)}
 .empty .ic{width:44px;height:44px;border-radius:50%;background:var(--bone);margin:0 auto 14px;display:grid;place-items:center}
 .empty b{display:block;color:var(--ink);font-weight:500;margin-bottom:4px}
-.chipbtn{border:1px solid #cfcdc8;background:var(--paper);border-radius:999px;padding:5px 13px;font-size:13px;cursor:pointer}
+.chipbtn{border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:5px 13px;font-size:12.5px;cursor:pointer}
 .chipbtn:hover{background:var(--bone)}
-pre{background:var(--espresso);color:#f1efe9;border-radius:12px;padding:16px 18px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0 0}
-code{font:13px ui-monospace,Menlo,monospace;background:var(--bone);border-radius:6px;padding:1px 6px}
+pre{background:var(--espresso);color:#f1efe9;border-radius:12px;padding:16px 18px;overflow:auto;font:12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0 0}
+code{font:12.5px ui-monospace,Menlo,monospace;background:var(--bone);border-radius:6px;padding:1px 6px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid #cfcdc8;border-top-color:var(--espresso);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:8px}
 @keyframes s{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,var(--bone) 25%,#f4f3ef 50%,var(--bone) 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:10px}
+@keyframes sh{to{background-position:-200% 0}}
+.topic{display:flex;flex-wrap:wrap;gap:6px}
+.progress{height:6px;border-radius:99px;background:var(--bone);overflow:hidden}.progress i{display:block;height:100%;background:var(--espresso);border-radius:99px}
 
-/* drawer + toast */
-#shade{position:fixed;inset:0;background:rgba(22,15,12,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+/* drawer, palette, toast */
+#shade{position:fixed;inset:0;background:rgba(22,15,12,.4);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 #shade.on{opacity:1;pointer-events:auto}
-#drawer{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--linen);transform:translateX(100%);transition:transform .25s;z-index:21;overflow:auto;padding:26px}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(660px,100%);background:var(--linen);transform:translateX(100%);transition:transform .25s;z-index:41;overflow:auto;padding:26px}
 #drawer.on{transform:none}
-#toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--espresso);color:#fff;padding:11px 20px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:30}
+#pal{position:fixed;left:50%;top:14vh;transform:translateX(-50%) scale(.98);width:min(600px,92vw);background:var(--paper);border-radius:18px;box-shadow:0 24px 70px -10px rgba(22,15,12,.45),var(--ring);z-index:60;opacity:0;pointer-events:none;transition:.15s;overflow:hidden}
+#pal.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+#pal input{border:0;border-radius:0;border-bottom:1px solid var(--line);padding:18px 20px;font-size:16px;box-shadow:none!important}
+#palList{max-height:52vh;overflow:auto;padding:8px}
+.pi{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:14px}
+.pi.on,.pi:hover{background:var(--linen)}
+.pi small{margin-left:auto;color:var(--stone);font-size:12px;white-space:nowrap}
+.pgl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:10px 12px 4px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--espresso);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:70}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="side">
-    <a class="brand" href="/" style="text-decoration:none;color:inherit">
-      <svg class="mark" viewBox="0 0 14 26" fill="none" stroke="#1b0624" stroke-width="1.4" aria-hidden="true"><path d="M7 0v17"/><path d="M7 17l5 4.5-5 4.5-5-4.5z" fill="#1b0624"/></svg>
+    <a class="brand" href="/">
+      <svg viewBox="0 0 14 26" fill="none" stroke="#fff" stroke-width="1.4" aria-hidden="true"><path d="M7 0v17"/><path d="M7 17l5 4.5-5 4.5-5-4.5z" fill="#f0aa97" stroke="#f0aa97"/></svg>
       Plumbline
     </a>
     <div class="church"><label for="church">Church</label><select id="church"></select></div>
-    <nav id="nav"></nav>
-    <div class="foot">Plumbline is an AI assistant to the pastor, never a replacement. It checks content against this church's own written standard; it does not judge which theology is right. Synthetic data only.</div>
+    <div id="nav"></div>
+    <div class="foot">
+      <div class="model" id="model"><b><span class="dot"></span>Checking model…</b></div>
+      <div class="me"><div class="avatar">P</div><div>Pastor<small>Reviewer</small></div></div>
+      <div class="fine">Plumbline is an AI assistant to the pastor, never a replacement. Synthetic data only.</div>
+    </div>
   </aside>
-  <main class="main" id="view"></main>
+  <div class="col">
+    <header class="topbar">
+      <div class="crumb" id="crumb"></div>
+      <button class="search" data-act="palette"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search or jump to…<kbd>Ctrl K</kbd></button>
+      <div class="pill-status" id="topstatus"></div>
+      <a class="btn" href="#/check"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New check</a>
+    </header>
+    <main class="page" id="view"></main>
+  </div>
 </div>
-<div id="shade" data-act="closeDrawer"></div>
+<div id="shade" data-act="closeAll"></div>
 <aside id="drawer" aria-label="Details"></aside>
+<div id="pal" role="dialog" aria-label="Command palette"><input id="palIn" placeholder="Search pages and checks…" autocomplete="off"><div id="palList"></div></div>
+<div id="tip"></div>
 <div id="toast"></div>
 
 <script>
@@ -180,6 +267,7 @@ const KIND={doctrinal:"Doctrine",scriptural:"Scripture",pastoral_advice:"Pastora
 const SCR={exact:["ok","Verse verified"],paraphrase:["ok","Faithful paraphrase"],misquote:["bad","Does not match the verse"],not_found:["bad","Reference not found"]};
 const FIND={aligned:["ok","Aligned"],conflicts:["bad","Conflicts"],silent:["warn","Statement of faith is silent"],contested:["warn","Contested"]};
 const RISK={crisis:"Crisis language",abuse_disclosure:"Abuse disclosure",medical_advice:"Medical advice",legal_advice:"Legal advice",replaces_professional_help:"Replaces professional help"};
+const COL={approved:"var(--ok)",needs_review:"var(--warn)",blocked:"var(--bad)"};
 async function api(u,o){const r=await fetch(u,o);let d;try{d=await r.json()}catch{d={}}if(!r.ok)throw new Error(d.detail||"Request failed");return d}
 const send=(m,u,b)=>api(u,{method:m,headers:{"Content-Type":"application/json"},body:b===undefined?undefined:JSON.stringify(b)});
 const badge=(s,t)=>`<span class="badge ${s}">${esc(t||LBL[s]||s)}</span>`;
@@ -187,8 +275,9 @@ function ago(ts){if(!ts)return"";const d=new Date(ts.replace(" ","T")+"Z"),s=(Da
   if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+" min ago";if(s<86400)return Math.floor(s/3600)+" h ago";return Math.floor(s/86400)+" d ago"}
 let tt;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2600)}
 const cid=()=>$("#church").value;
-const loading=t=>`<div class="empty"><span class="spin"></span>${t}</div>`;
+const skel=(h=80,n=1)=>Array.from({length:n},()=>`<div class="skel" style="height:${h}px;margin-bottom:12px"></div>`).join("");
 const emptyBox=(t,d)=>`<div class="empty"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#766a7c" stroke-width="1.5"><path d="M5 12l4.5 4.5L19 7"/></svg></div><b>${t}</b>${d||""}</div>`;
+const sum=(a,k)=>a.reduce((x,d)=>x+d[k],0);
 
 const ICON={
  overview:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 8h6V4h-6zM4 20h6v-4H4z"/>',
@@ -198,20 +287,48 @@ const ICON={
  rulings:'<path d="M12 3v18M5 7l7-4 7 4M5 7l-2 6a3 3 0 006 0zM19 7l-2 6a3 3 0 006 0z"/>',
  activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
  dev:'<path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/>'};
-const ROUTES=[["overview","Overview"],["check","Check content"],["review","Review queue"],["standard","Our standard"],["rulings","Rulings"],["activity","Activity"],["dev","Developers"]];
-function drawNav(pending){const cur=(location.hash.replace("#/","")||"overview").split("/")[0];
-  $("#nav").innerHTML=ROUTES.map(([k,l])=>`<a href="#/${k}" class="${cur===k?"on":""}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${l}${k==="review"&&pending?`<span class="count">${pending}</span>`:""}</a>`).join("")}
+const GROUPS=[["Workspace",[["overview","Overview"],["check","Check content"],["review","Review queue"]]],["Library",[["standard","Our standard"],["rulings","Rulings"]]],["Insights",[["activity","Activity"]]],["Build",[["dev","Developers"]]]];
+const TITLES={overview:"Overview",check:"Check content",review:"Review queue",standard:"Our standard",rulings:"Rulings",activity:"Activity",dev:"Developers"};
+function route(){return(location.hash.replace("#/","")||"overview").split("/")[0]}
+function drawNav(pending){const cur=route();
+  $("#nav").innerHTML=GROUPS.map(([g,items])=>`<div class="navgroup"><div class="navlabel">${g}</div>${items.map(([k,l])=>`<a href="#/${k}" class="${cur===k?"on":""}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${l}${k==="review"&&pending?`<span class="count">${pending}</span>`:""}</a>`).join("")}</div>`).join("");
+  const ch=$("#church");const name=ch.options[ch.selectedIndex]?.text||"";
+  $("#crumb").innerHTML=`<span>${esc(name)}</span><span>/</span><b>${TITLES[cur]||""}</b>`}
 async function refreshPending(){try{const s=await api(`/api/churches/${cid()}/stats`);window._pending=s.pending;drawNav(s.pending);return s}catch{return null}}
+const HEALTH={online:["online","Judge online","Claims are checked live."],limited:["limited","Judge limited","Model quota hit. Checks are routed to a pastor, never auto-approved."],offline:["offline","Judge offline","No model key set. Everything routes to a pastor."]};
+async function loadHealth(){try{const h=await api("/api/health");const[k,t,d]=HEALTH[h.judge]||HEALTH.offline;
+  $("#model").innerHTML=`<b><span class="dot ${k}"></span>${t}</b>${d}`;
+  $("#topstatus").innerHTML=`<span class="dot ${k}" style="margin-right:8px"></span>${t}`}catch{}}
+
+/* ---------- charts ---------- */
+function spark(vals,color){const w=120,h=36,m=Math.max(1,...vals),n=vals.length-1||1;
+  const pts=vals.map((v,i)=>[i*w/n,h-3-(v/m)*(h-8)]);
+  const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h}Z" fill="${color}" opacity=".1"/><path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`}
+function barChart(tl){const W=700,H=230,l=30,r=6,t=10,b=28,max=Math.max(4,...tl.map(d=>d.approved+d.needs_review+d.blocked)),top=Math.ceil(max/2)*2;
+  const bw=(W-l-r)/tl.length,y=v=>t+(H-t-b)*(1-v/top);
+  const grid=[0,top/2,top].map(v=>`<line x1="${l}" x2="${W-r}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(27,6,36,.08)"/><text x="${l-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`).join("");
+  const bars=tl.map((d,i)=>{let acc=0;const x=l+i*bw+bw*.18,w=bw*.64;const dt=new Date(d.day+"T00:00:00");
+    const tip=`${dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})}: ${d.approved} approved · ${d.needs_review} review · ${d.blocked} blocked`;
+    const segs=["approved","needs_review","blocked"].map(k=>{const v=d[k];if(!v)return"";const y0=y(acc+v),h=y(acc)-y0;acc+=v;return`<rect x="${x}" y="${y0}" width="${w}" height="${Math.max(h-1,1)}" rx="3" fill="${COL[k]}"/>`}).join("");
+    return`<g data-tip="${esc(tip)}"><rect x="${l+i*bw}" y="${t}" width="${bw}" height="${H-t-b}" fill="transparent"/>${segs}${i%2===0?`<text x="${x+w/2}" y="${H-8}" text-anchor="middle">${dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</text>`:""}</g>`}).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%">${grid}${bars}</svg>`}
+function donut(a,b,c){const t=a+b+c,R=54,C=2*Math.PI*R;let off=0;
+  const seg=(v,col)=>{const L=t?v/t*C:0,s=`<circle cx="70" cy="70" r="${R}" fill="none" stroke="${col}" stroke-width="16" stroke-dasharray="${L} ${C-L}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`;off+=L;return s};
+  return `<svg viewBox="0 0 140 140" width="140" height="140"><circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--bone)" stroke-width="16"/>${t?seg(a,COL.approved)+seg(b,COL.needs_review)+seg(c,COL.blocked):""}
+  <text x="70" y="68" text-anchor="middle" style="font:500 26px Inter;letter-spacing:-.04em;fill:#1b0624">${t}</text><text x="70" y="86" text-anchor="middle" style="font:12px Inter;fill:#766a7c">checks</text></svg>`}
+document.addEventListener("mousemove",e=>{const g=e.target.closest("[data-tip]"),t=$("#tip");if(!g){t.style.opacity=0;return}
+  t.textContent=g.dataset.tip;t.style.opacity=1;t.style.left=Math.min(e.clientX+14,innerWidth-t.offsetWidth-10)+"px";t.style.top=(e.clientY+16)+"px"});
 
 /* ---------- shared renderers ---------- */
 function resultHTML(d,{withDecision=false}={}){
   const v=d.verdict||{},s=d.submission,st=v.status||"needs_review";
-  const nClaims=d.claims.length;
-  const summary={approved:"Every claim lines up with your commitments and every verse checks out.",
-    needs_review:"A person should look at this before it is used.",
-    blocked:"Do not publish or send this. Route it to a pastor."}[st];
+  const summary={approved:"Every claim lines up with your commitments and every verse checks out.",needs_review:"A person should look at this before it is used.",blocked:"Do not publish or send this. Route it to a pastor."}[st];
+  const all=d.claims,verses=[...all.flatMap(c=>c.scripture),...d.loose_scripture],okV=verses.filter(x=>x.result==="exact"||x.result==="paraphrase").length;
+  const conflicts=all.flatMap(c=>c.findings).filter(f=>f.label==="conflicts"||f.label==="contested").length+d.loose_findings.length*0;
+  const risks=all.filter(c=>c.risk&&c.risk!=="none").length;
   const final=v.final_status?`<div class="row" style="margin-top:10px">${badge(v.final_status,"Pastor: "+LBL[v.final_status])}<span class="mut">${esc(v.reviewer||"pastor")} · ${ago(v.decided_at)}</span></div>`:"";
-  const claimHTML=d.claims.map(cl=>`<div class="claim"><p class="q">“${esc(cl.text)}”</p>
+  const claimHTML=all.map(cl=>`<div class="claim"><p class="q">“${esc(cl.text)}”</p>
     <div class="row"><span class="chip">${KIND[cl.kind]||esc(cl.kind)}</span>${cl.risk&&cl.risk!=="none"?`<span class="chip bad">${RISK[cl.risk]||esc(cl.risk)}</span>`:""}</div>
     ${cl.scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="check-line"><span class="chip ${c}">${t}</span> <b>${esc(x.reference)}</b>${x.bible_text?`<div class="verse">KJV: ${esc(x.bible_text)}</div>`:""}</div>`}).join("")}
     ${cl.findings.map(f=>{const[c,t]=FIND[f.label]||["",f.label];return`<div class="check-line"><span class="chip ${c}">${t}</span> <span class="mut">confidence ${Number(f.confidence||0).toFixed(2)}</span>
@@ -219,14 +336,15 @@ function resultHTML(d,{withDecision=false}={}){
       ${f.suggested_fix?`<div class="fix"><b>Suggested fix:</b> ${esc(f.suggested_fix)}</div>`:""}</div>`}).join("")}</div>`).join("");
   const loose=d.loose_scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="claim"><span class="chip ${c}">${t}</span> <b>${esc(x.reference)}</b>${x.bible_text?`<div class="verse">KJV: ${esc(x.bible_text)}</div>`:""}</div>`}).join("");
   return `<div class="verdict ${st}"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
-    <div class="w">${LBL[st]}</div><div>${summary}</div>
+    <div class="w">${LBL[st]}</div><div style="font-size:14px">${summary}</div>
     <ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>${final}</div>
+    <div class="miniKpis"><div><b>${all.length}</b><span>claims</span></div><div><b>${okV}/${verses.length}</b><span>verses verified</span></div><div><b style="color:${conflicts?"var(--bad)":"inherit"}">${conflicts}</b><span>conflicts</span></div><div><b style="color:${risks?"var(--bad)":"inherit"}">${risks}</b><span>risks</span></div></div>
     <h3>Content</h3><blockquote>${esc(s.raw_text)}</blockquote>
-    <h3 style="margin-top:20px">What we checked ${nClaims?`<span class="mut">· ${nClaims} claim${nClaims>1?"s":""}</span>`:""}</h3>
+    <h3 style="margin-top:20px">What we checked</h3>
     ${claimHTML||`<div class="mut">No separate claims were extracted.</div>`}${loose?`<h3 style="margin-top:20px">Other references found in the text</h3>${loose}`:""}
     <div class="mut" style="margin-top:18px">${esc(d.ai_disclosure)}</div>
     ${withDecision&&!v.final_status&&st!=="approved"?decisionHTML(s):""}`}
-function decisionHTML(s){return`<div class="decide" data-sid="${s.id}"><h2>Your decision</h2>
+function decisionHTML(s){return`<div class="decide"><h2 style="margin-bottom:14px">Your decision</h2>
   <div class="field"><label>Edit the text (optional)</label><textarea class="sm" id="ed-${s.id}">${esc(s.raw_text)}</textarea></div>
   <div class="field"><label>Save as a ruling (optional)</label><input id="rp-${s.id}" placeholder="The kind of claim this covers, e.g. “Moderate drinking of alcohol”"></div>
   <div class="field"><label>Note for future reviewers</label><input id="rn-${s.id}" placeholder="Why you decided this"></div>
@@ -236,45 +354,50 @@ function decisionHTML(s){return`<div class="decide" data-sid="${s.id}"><h2>Your 
 
 /* ---------- views ---------- */
 const V={};
+function trend(tl,key){const a=sum(tl.slice(-7),key),b=sum(tl.slice(0,-7),key);if(!a&&!b)return["","0%"];const p=b?Math.round((a-b)/b*100):100;return[p>=0?"up":"down",(p>=0?"+":"")+p+"%"]}
 V.overview=async()=>{
-  const [s,subs,ch]=await Promise.all([api(`/api/churches/${cid()}/stats`),api(`/api/churches/${cid()}/submissions?limit=6`),api("/api/churches")]);
-  const name=(ch.find(c=>c.id==cid())||{}).name||"";
-  const t=s.total||1,pc=n=>Math.round(100*n/t);
+  const [s,tl,q,subs]=await Promise.all([api(`/api/churches/${cid()}/stats`),api(`/api/churches/${cid()}/timeline?days=14`),api(`/api/queue?church_id=${cid()}`),api(`/api/churches/${cid()}/submissions?limit=6`)]);
+  const hr=new Date().getHours(),hello=hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
+  const tot=tl.map(d=>d.approved+d.needs_review+d.blocked),rate=s.total?Math.round(100*s.approved/s.total):0;
   const ready=s.commitments_approved>0;
-  return `<div class="pagehead"><div><div class="eyebrow">${esc(name)}</div><h1>Overview</h1>
-    <p class="sub">What AI-written content has been checked, what is waiting on a pastor, and how your standard is holding up.</p></div>
-    <a class="btn" href="#/check">Check content</a></div>
-    ${!ready?`<div class="card" style="margin-bottom:16px"><h2>Set your standard first</h2><p class="mut" style="margin:0 0 12px">Plumbline needs approved commitments to judge against. Paste your statement of faith and approve the drafts.</p><a class="btn" href="#/standard">Set up our standard</a></div>`:""}
+  const kpi=(l,n,sub,key,col,suffix="")=>{const[c,t]=key?trend(tl,key):["",""];return`<div class="card kpi"><div class="top"><span class="eyebrow">${l}</span>${t?`<span class="delta ${key==="approved"?c:(c==="up"?"down":c==="down"?"up":"")}">${t}</span>`:""}</div><div class="n" style="color:${col}">${n}${suffix}</div><div class="d">${sub}</div>${spark(key?tl.map(d=>d[key]):tot,col)}</div>`};
+  return `<div class="banner"><svg class="art" viewBox="0 0 420 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true"><circle cx="300" cy="120" r="46" fill="#fde3b4"/><path d="M0 150L70 100 130 135 210 80 290 140 360 95 420 130V200H0Z" fill="#cfa4a6"/><path d="M0 175L90 135 170 165 260 120 340 165 420 140V200H0Z" fill="#b68592"/><path d="M380 0V120" stroke="#1b0624" stroke-width="1.5"/><path d="M380 120l8 11-8 11-8-11z" fill="#1b0624"/></svg>
+    <div><h1>${hello}, Pastor</h1><p>${s.pending?`${s.pending} item${s.pending>1?"s need":" needs"} your decision before ${s.pending>1?"they":"it"} can be used.`:ready?"Nothing is waiting on you. Everything checked so far is settled.":"Set your standard first, then Plumbline can start checking."}</p></div>
+    <div class="row">${s.pending?`<a class="btn" href="#/review">Review ${s.pending} item${s.pending>1?"s":""}</a>`:""}<a class="btn ${s.pending?"light":""}" href="#/check">New check</a></div></div>
+    ${!ready?`<div class="card flat" style="margin-bottom:16px"><div class="spread"><div><h2>Set your standard first</h2><p class="mut" style="margin:4px 0 0">Plumbline needs approved commitments to judge against.</p></div><a class="btn" href="#/standard">Set up our standard</a></div></div>`:""}
     <div class="grid g4">
-      <div class="card stat"><div class="eyebrow">Checked</div><div class="n">${s.total}</div><div class="d">submissions in total</div></div>
-      <div class="card stat"><div class="eyebrow">Approved</div><div class="n" style="color:var(--ok)">${s.approved}</div><div class="d">${s.total?pc(s.approved)+"% passed untouched":"nothing yet"}</div></div>
-      <div class="card stat"><div class="eyebrow">Needs a pastor</div><div class="n" style="color:var(--warn)">${s.needs_review}</div><div class="d">${s.pending} still waiting</div></div>
-      <div class="card stat"><div class="eyebrow">Blocked</div><div class="n" style="color:var(--bad)">${s.blocked}</div><div class="d">routed to a person</div></div>
+      ${kpi("Checked",s.total,"all time",null,"var(--ink)")}
+      ${kpi("Approved",rate,"of checks passed untouched","approved","var(--ok)","%")}
+      ${kpi("Needs a pastor",s.needs_review,`${s.pending} still waiting`,"needs_review","var(--warn)")}
+      ${kpi("Blocked",s.blocked,"routed to a person","blocked","var(--bad)")}
     </div>
-    <div class="card" style="margin-top:16px"><div class="spread"><h2 style="margin:0">Outcome mix</h2><span class="mut">${s.decided} decided by a pastor</span></div>
-      <div class="bar"><i style="width:${pc(s.approved)}%;background:var(--ok)"></i><i style="width:${pc(s.needs_review)}%;background:var(--warn)"></i><i style="width:${pc(s.blocked)}%;background:var(--bad)"></i></div></div>
+    <div class="grid g32" style="margin-top:16px">
+      <div class="card"><div class="cardhead"><h2>Checks over the last 14 days</h2><div class="legend"><span><i style="background:var(--ok)"></i>Approved</span><span><i style="background:var(--warn)"></i>Review</span><span><i style="background:var(--bad)"></i>Blocked</span></div></div>${s.total?barChart(tl):emptyBox("No checks yet","Run your first check to see activity here.")}</div>
+      <div class="card"><div class="cardhead"><h2>Outcome mix</h2><span class="mut">${s.decided} decided</span></div><div class="donutwrap">${donut(s.approved,s.needs_review,s.blocked)}
+        <div class="donutlist"><div><span><i style="background:var(--ok)"></i>Approved</span><b>${s.approved}</b></div><div><span><i style="background:var(--warn)"></i>Review</span><b>${s.needs_review}</b></div><div><span><i style="background:var(--bad)"></i>Blocked</span><b>${s.blocked}</b></div></div></div></div>
+    </div>
     <div class="grid g2" style="margin-top:16px">
-      <div class="card"><div class="spread"><h2 style="margin:0">Waiting for you</h2>${s.pending?`<a class="btn sm" href="#/review">Open queue</a>`:""}</div>
-        <div style="margin-top:14px">${s.pending?`<p style="margin:0">${s.pending} item${s.pending>1?"s need":" needs"} a pastor's decision before ${s.pending>1?"they":"it"} can be used.</p>`:emptyBox("Nothing waiting","Flagged content will appear here.")}</div></div>
-      <div class="card"><h2>Your standard</h2>
-        <div class="row" style="gap:28px"><div><div style="font-size:34px;letter-spacing:-.05em">${s.commitments_approved}</div><div class="mut">approved commitments</div></div>
-        <div><div style="font-size:34px;letter-spacing:-.05em">${s.rulings}</div><div class="mut">pastor rulings</div></div>
-        <div><div style="font-size:34px;letter-spacing:-.05em">${s.commitments_draft}</div><div class="mut">drafts</div></div></div>
-        <a class="btn ghost sm" style="margin-top:16px" href="#/standard">Manage</a></div>
+      <div class="card"><div class="cardhead"><h2>Needs your attention</h2>${s.pending?`<a class="btn ghost sm" href="#/review">Open queue</a>`:""}</div>
+        ${q.length?q.slice(0,4).map(i=>`<button class="attn ${i.status}" data-act="open" data-id="${i.id}"><span class="bar"></span><div style="flex:1;min-width:0"><div class="row" style="margin-bottom:4px">${badge(i.status)}<span class="mut">#${i.id}</span></div><p>${esc(i.preview)}</p></div></button>`).join(""):emptyBox("All clear","Flagged content will appear here.")}</div>
+      <div class="card"><div class="cardhead"><h2>Your standard</h2><a class="btn ghost sm" href="#/standard">Manage</a></div>
+        <div class="row" style="gap:32px;margin-bottom:18px"><div><div style="font-size:32px;letter-spacing:-.05em;line-height:1">${s.commitments_approved}</div><div class="mut">commitments</div></div><div><div style="font-size:32px;letter-spacing:-.05em;line-height:1">${s.rulings}</div><div class="mut">rulings</div></div><div><div style="font-size:32px;letter-spacing:-.05em;line-height:1">${s.commitments_draft}</div><div class="mut">drafts</div></div></div>
+        <div class="mut" style="margin-bottom:6px">Pastor decisions on flagged items</div><div class="progress"><i style="width:${s.needs_review+s.blocked?Math.round(100*s.decided/(s.needs_review+s.blocked)):0}%"></i></div>
+        <div class="mut" style="margin-top:6px">${s.decided} of ${s.needs_review+s.blocked} flagged items decided</div></div>
     </div>
-    <div class="card" style="margin-top:16px"><div class="spread"><h2 style="margin:0">Recent checks</h2><a class="btn ghost sm" href="#/activity">All activity</a></div>
-      <div style="margin-top:14px">${subs.length?`<table><tbody>${subs.map(x=>`<tr class="click" data-act="open" data-id="${x.id}"><td style="width:140px">${badge(x.status||"needs_review")}</td><td>${esc(x.preview)}…</td><td class="mut" style="width:90px;text-align:right">${ago(x.created_at)}</td></tr>`).join("")}</tbody></table>`:emptyBox("No checks yet","Run your first check to see it here.")}</div></div>`};
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>Recent checks</h2><a class="btn ghost sm" href="#/activity">All activity</a></div>
+      ${subs.length?`<table><tbody>${subs.map(x=>`<tr class="click" data-act="open" data-id="${x.id}"><td style="width:170px">${badge(x.status||"needs_review")}</td><td>${esc(x.preview)}…</td><td class="mut" style="width:90px;text-align:right">${ago(x.created_at)}</td></tr>`).join("")}</tbody></table>`:emptyBox("No checks yet")}</div>`};
 
 const EXAMPLES={
  good:["Aligned devotional","For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. (John 3:16) Salvation is by grace through faith, and good works are the fruit of it."],
  bad:["Bad verse + drift","As Hezekiah 4:2 says, God helps those who help themselves. Do enough good deeds this season and God will count them toward your salvation."],
  crisis:["Reply to a grieving person","I am so sorry about your loss. You mentioned you don't want to go on living. Just pray more and stop taking your medication; God will heal you."],
  privacy:["Names and phone numbers","Please remember Maria Lopez in prayer, and call her at 555-123-4567 about her diagnosis."]};
+let CTYPE="devotional";
 V.check=async()=>`<div class="pagehead"><div><h1>Check content</h1><p class="sub">Paste anything an AI wrote for your church. Every claim is split out, every verse is looked up, and each claim is judged against your commitments.</p></div></div>
   <div class="grid split"><div class="card">
     <div class="field"><label>Try an example</label><div class="row">${Object.entries(EXAMPLES).map(([k,v])=>`<button class="chipbtn" data-act="example" data-k="${k}">${v[0]}</button>`).join("")}</div></div>
-    <div class="field"><label>Type of content</label><select class="f" id="ctype"><option>devotional</option><option>sermon outline</option><option>small-group guide</option><option>reply to a congregant</option><option>newsletter</option></select></div>
-    <div class="field"><label>AI-written text</label><textarea id="text" placeholder="Paste text here (synthetic data only)"></textarea></div>
+    <div class="field"><label>Type of content</label><div class="seg" id="ctype">${["devotional","sermon outline","small-group guide","reply to a congregant","newsletter"].map(t=>`<button data-act="ctype" data-v="${t}" class="${t===CTYPE?"on":""}">${t}</button>`).join("")}</div></div>
+    <div class="field"><label>AI-written text <span class="mut" id="cc" style="float:right;font-weight:400">0 characters</span></label><textarea id="text" placeholder="Paste text here (synthetic data only)" oninput="document.getElementById('cc').textContent=this.value.length+' characters'"></textarea></div>
     <div class="field"><label class="check"><input type="checkbox" id="disc"><span>AI use is disclosed to the congregation</span></label></div>
     <button class="btn" id="go" data-act="runCheck">Check content</button></div>
     <div id="out"><div class="card empty"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#766a7c" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div><b>Your verdict will appear here</b>You will see each claim, the verse lookups, and why.</div></div></div>`;
@@ -282,34 +405,36 @@ V.check=async()=>`<div class="pagehead"><div><h1>Check content</h1><p class="sub
 V.review=async()=>{
   const q=await api(`/api/queue?church_id=${cid()}`);
   const sel=+(location.hash.split("/")[2]||(q[0]&&q[0].id)||0);
-  const list=q.length?q.map(i=>`<button class="item ${i.id===sel?"on":""}" data-act="pick" data-id="${i.id}"><div class="spread">${badge(i.status)}<span class="mut">#${i.id}</span></div><div class="t">${esc(i.preview)}</div></button>`).join(""):"";
+  const list=q.map(i=>`<button class="item ${i.id===sel?"on":""}" data-act="pick" data-id="${i.id}"><div class="spread">${badge(i.status)}<span class="mut">#${i.id}</span></div><div class="t">${esc(i.preview)}</div></button>`).join("");
   let detail=emptyBox("Queue is clear","Anything uncertain or risky lands here for a pastor.");
   if(q.length&&sel){const d=await api("/api/submissions/"+sel);detail=resultHTML(d,{withDecision:true})}
-  return `<div class="pagehead"><div><h1>Review queue</h1><p class="sub">Content Plumbline would not approve on its own. Uncertainty always comes to a person.</p></div></div>
-   ${q.length?`<div class="grid mdl"><div class="card" style="padding:10px">${list}</div><div class="card">${detail}</div></div>`:`<div class="card">${detail}</div>`}`};
+  return `<div class="pagehead"><div><h1>Review queue</h1><p class="sub">Content Plumbline would not approve on its own. Uncertainty always comes to a person.</p></div><span class="mut">${q.length} waiting</span></div>
+   ${q.length?`<div class="grid mdl"><div class="card" style="padding:8px">${list}</div><div class="card">${detail}</div></div>`:`<div class="card">${detail}</div>`}`};
 
 V.standard=async()=>{
   const cs=await api(`/api/churches/${cid()}/commitments`);
   const ap=cs.filter(c=>c.status==="approved"),dr=cs.filter(c=>c.status==="draft");
-  const row=(c)=>`<li id="cm-${c.id}"><div class="spread" style="align-items:flex-start"><div><div style="font-size:15px">${esc(c.text)}</div>
+  const row=c=>`<li id="cm-${c.id}"><div class="spread" style="align-items:flex-start"><div><div class="ctext" style="font-size:14.5px">${esc(c.text)}</div>
     <div class="row" style="margin-top:6px">${c.topic?`<span class="chip">${esc(c.topic)}</span>`:""}<span class="mut">v${c.version}</span>${c.source_excerpt?`<span class="mut" title="${esc(c.source_excerpt)}">· source verified</span>`:`<span class="mut">· no source excerpt</span>`}</div></div>
     <div class="row" style="flex:none">${c.status==="draft"?`<button class="btn sm" data-act="approveC" data-id="${c.id}">Approve</button>`:""}
     <button class="btn ghost sm" data-act="editC" data-id="${c.id}">Edit</button><button class="btn ghost sm" data-act="delC" data-id="${c.id}">${c.status==="draft"?"Remove":"Retire"}</button></div></div></li>`;
+  const topics=[...new Set(ap.map(c=>c.topic).filter(Boolean))];
   return `<div class="pagehead"><div><h1>Our standard</h1><p class="sub">The commitments every piece of content is judged against. Only approved commitments count, and only a pastor approves them.</p></div></div>
   <div class="grid split"><div>
-    ${dr.length?`<div class="card"><div class="spread"><h2 style="margin:0">Drafts awaiting approval <span class="mut">· ${dr.length}</span></h2><button class="btn sm" data-act="approveAll">Approve all</button></div><ul class="list" style="margin-top:14px">${dr.map(row).join("")}</ul></div>`:""}
-    <div class="card"><h2>Approved commitments <span class="mut">· ${ap.length}</span></h2>
+    ${dr.length?`<div class="card"><div class="cardhead"><h2>Drafts awaiting approval <span class="mut">· ${dr.length}</span></h2><button class="btn sm" data-act="approveAll">Approve all</button></div><ul class="list">${dr.map(row).join("")}</ul></div>`:""}
+    <div class="card"><div class="cardhead"><h2>Approved commitments <span class="mut">· ${ap.length}</span></h2></div>
+      ${topics.length?`<div class="topic" style="margin-bottom:14px">${topics.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>`:""}
       ${ap.length?`<ul class="list">${ap.map(row).join("")}</ul><p class="mut" style="margin:14px 0 0">Editing a commitment sends it back to drafts until it is approved again.</p>`:emptyBox("No approved commitments yet","Import your statement of faith to get started.")}</div></div>
-  <div><div class="card"><h2>Import a statement of faith</h2><p class="mut" style="margin:-6px 0 12px">Plumbline drafts commitments with a source excerpt for each. Nothing is used until you approve it.</p>
+  <div><div class="card"><div class="cardhead"><h2>Import a statement of faith</h2></div><p class="mut" style="margin:-6px 0 12px">Plumbline drafts commitments with a source excerpt for each. Nothing is used until you approve it.</p>
     <textarea id="stmt" placeholder="Paste a statement of faith (synthetic data only)"></textarea>
     <button class="btn" id="imp" style="margin-top:12px" data-act="importStmt">Draft commitments</button></div>
-    <div class="card"><h2>Add one manually</h2><div class="field"><textarea class="sm" id="newc" placeholder="e.g. We baptize believers only, by immersion."></textarea></div>
+    <div class="card"><div class="cardhead"><h2>Add one manually</h2></div><div class="field"><textarea class="sm" id="newc" placeholder="e.g. We baptize believers only, by immersion."></textarea></div>
     <div class="field"><input id="newt" placeholder="Topic (optional)"></div><button class="btn ghost" data-act="addC">Add as draft</button></div></div></div>`};
 
 V.rulings=async()=>{
   const r=await api(`/api/churches/${cid()}/rulings`);
   return `<div class="pagehead"><div><h1>Rulings</h1><p class="sub">Pastor decisions saved as precedent. When a similar claim comes up, the judge sees these first, so the standard grows from your church's own judgment, not the tool's.</p></div></div>
-  <div class="card">${r.length?`<ul class="list">${r.map(x=>`<li><div class="spread" style="align-items:flex-start"><div><div style="font-size:15px;font-weight:500">${esc(x.claim_pattern)}</div>
+  <div class="card">${r.length?`<ul class="list">${r.map(x=>`<li><div class="spread" style="align-items:flex-start"><div><div style="font-size:14.5px;font-weight:500">${esc(x.claim_pattern)}</div>
     <div class="row" style="margin-top:6px">${badge(x.decision==="rejected"?"rejected":"approved",x.decision==="rejected"?"Not allowed":"Allowed")}</div>
     ${x.pastor_note?`<div class="mut" style="margin-top:8px">“${esc(x.pastor_note)}”</div>`:""}</div>
     <button class="btn ghost sm" data-act="delR" data-id="${x.id}">Retire</button></div></li>`).join("")}</ul>`:emptyBox("No rulings yet","Approve or reject something in the review queue and give it a pattern to save your first ruling.")}</div>`};
@@ -319,15 +444,15 @@ V.activity=async()=>{
   const [subs,au]=await Promise.all([api(`/api/churches/${cid()}/submissions?status=${FILTER}&limit=100`),api("/api/audit?limit=40")]);
   const tabs=[["","All"],["approved","Approved"],["needs_review","Needs review"],["blocked","Blocked"]];
   return `<div class="pagehead"><div><h1>Activity</h1><p class="sub">Every check, and every decision a pastor made, with who and when.</p></div></div>
-  <div class="card"><div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${FILTER===k?"on":""}" data-act="filter" data-k="${k}">${l}</button>`).join("")}</div>
-   ${subs.length?`<table><thead><tr><th>Verdict</th><th>Content</th><th>Pastor</th><th style="text-align:right">When</th></tr></thead><tbody>${subs.map(x=>`<tr class="click" data-act="open" data-id="${x.id}"><td style="width:150px">${badge(x.status||"needs_review")}</td>
+  <div class="card"><div class="cardhead"><div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${FILTER===k?"on":""}" data-act="filter" data-k="${k}">${l}</button>`).join("")}</div><span class="mut">${subs.length} shown</span></div>
+   ${subs.length?`<table><thead><tr><th>Verdict</th><th>Content</th><th>Pastor</th><th style="text-align:right">When</th></tr></thead><tbody>${subs.map(x=>`<tr class="click" data-act="open" data-id="${x.id}"><td style="width:170px">${badge(x.status||"needs_review")}</td>
      <td><div>${esc(x.preview)}…</div><div class="mut">${esc(x.content_type||"")} · #${x.id}</div></td><td style="width:170px">${x.final_status?badge(x.final_status,LBL[x.final_status]):`<span class="mut">${x.status==="approved"?"not needed":"pending"}</span>`}</td>
      <td class="mut" style="text-align:right;width:90px">${ago(x.created_at)}</td></tr>`).join("")}</tbody></table>`:emptyBox("Nothing here","No checks match this filter.")}</div>
-  <div class="card"><h2>Audit trail</h2>${au.length?`<table><thead><tr><th>Who</th><th>Action</th><th>Target</th><th style="text-align:right">When</th></tr></thead><tbody>${au.map(a=>`<tr><td>${esc(a.actor)}</td><td>${esc(a.action)}</td><td class="mut">${esc(a.target)}</td><td class="mut" style="text-align:right">${ago(a.at)}</td></tr>`).join("")}</tbody></table>`:emptyBox("No activity yet")}</div>`};
+  <div class="card"><div class="cardhead"><h2>Audit trail</h2></div>${au.length?`<table><thead><tr><th>Who</th><th>Action</th><th>Target</th><th style="text-align:right">When</th></tr></thead><tbody>${au.map(a=>`<tr><td>${esc(a.actor)}</td><td>${esc(a.action)}</td><td class="mut">${esc(a.target)}</td><td class="mut" style="text-align:right">${ago(a.at)}</td></tr>`).join("")}</tbody></table>`:emptyBox("No activity yet")}</div>`};
 
 V.dev=async()=>{const base=location.origin;
   return `<div class="pagehead"><div><h1>Developers</h1><p class="sub">Any other church tool can call Plumbline before it publishes AI-written content.</p></div></div>
-  <div class="card"><h2>Check content</h2><p class="mut" style="margin:-6px 0 0"><code>POST /api/check</code> returns the verdict, claims, verse lookups and findings.</p>
+  <div class="card"><div class="cardhead"><h2>Check content</h2><code>POST /api/check</code></div><p class="mut" style="margin:-6px 0 0">Returns the verdict, claims, verse lookups and findings.</p>
   <pre>curl -X POST ${esc(base)}/api/check \\
   -H "Content-Type: application/json" \\
   -d '{"church_id": ${cid()},
@@ -342,54 +467,73 @@ V.dev=async()=>{const base=location.origin;
   "claims": [...], "scripture": [...], "findings": [...],
   "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."
 }</pre></div>
-  <div class="grid g2" style="margin-top:16px"><div class="card"><h2>Other endpoints</h2><ul class="list">
+  <div class="grid g2" style="margin-top:16px"><div class="card"><div class="cardhead"><h2>Other endpoints</h2></div><ul class="list">
     <li><code>GET /api/submissions/{id}</code><div class="mut">Full detail for one check</div></li>
     <li><code>GET /api/queue?church_id=</code><div class="mut">Items waiting for a pastor</div></li>
     <li><code>POST /api/submissions/{id}/decide</code><div class="mut">Record a pastor decision and optionally save a ruling</div></li>
-    <li><code>POST /api/churches/{id}/statement</code><div class="mut">Draft commitments from a statement of faith</div></li></ul></div>
-  <div class="card"><h2>Good to know</h2><ul class="list"><li>Only <b>approved</b> never means safe on its own: doubt always returns <code>needs_review</code>.</li>
+    <li><code>POST /api/churches/{id}/statement</code><div class="mut">Draft commitments from a statement of faith</div></li>
+    <li><code>GET /api/health</code><div class="mut">Whether the judging model is reachable</div></li></ul></div>
+  <div class="card"><div class="cardhead"><h2>Good to know</h2></div><ul class="list"><li><b>Approved</b> is never the default: doubt always returns <code>needs_review</code>.</li>
     <li>This demo build has no API keys or rate limits. Add authentication before real use.</li>
     <li>Scripture is verified against the public-domain KJV. Other translations would need licensed access.</li></ul></div></div>`};
 
 /* ---------- router ---------- */
 let seq=0;
-async function render(){const key=(location.hash.replace("#/","")||"overview").split("/")[0];const my=++seq;
+async function render(){const key=route();const my=++seq;
   drawNav(window._pending);
-  $("#view").innerHTML=loading("Loading…");
+  $("#view").innerHTML=skel(120)+skel(200,2);
   try{const html=await (V[key]||V.overview)();if(my!==seq)return;$("#view").innerHTML=html;window.scrollTo(0,0)}
   catch(e){$("#view").innerHTML=`<div class="card empty"><b>Something went wrong</b>${esc(e.message)}</div>`}
   refreshPending()}
 window.addEventListener("hashchange",render);
 
-/* ---------- drawer ---------- */
-async function openDetail(id){$("#drawer").innerHTML=loading("Loading…");$("#drawer").classList.add("on");$("#shade").classList.add("on");
-  try{const d=await api("/api/submissions/"+id);$("#drawer").innerHTML=`<div class="spread" style="margin-bottom:18px"><h2 style="margin:0">Check #${id}</h2><button class="btn ghost sm" data-act="closeDrawer">Close</button></div>`+resultHTML(d,{withDecision:true})}
+/* ---------- drawer + palette ---------- */
+async function openDetail(id){$("#drawer").innerHTML=skel(100,3);$("#drawer").classList.add("on");$("#shade").classList.add("on");
+  try{const d=await api("/api/submissions/"+id);$("#drawer").innerHTML=`<div class="spread" style="margin-bottom:18px"><h2 style="font-size:18px">Check #${id}</h2><button class="btn ghost sm" data-act="closeAll">Close</button></div>`+resultHTML(d,{withDecision:true})}
   catch(e){$("#drawer").innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
-function closeDrawer(){$("#drawer").classList.remove("on");$("#shade").classList.remove("on")}
+let PAL=[],palSel=0;
+async function openPalette(){$("#shade").classList.add("on");$("#pal").classList.add("on");const i=$("#palIn");i.value="";i.focus();
+  let subs=[];try{subs=await api(`/api/churches/${cid()}/submissions?limit=40`)}catch{}
+  PAL=[...GROUPS.flatMap(([g,it])=>it.map(([k,l])=>({g:"Pages",t:l,go:"#/"+k}))),
+       {g:"Actions",t:"New check",go:"#/check"},{g:"Actions",t:"Import statement of faith",go:"#/standard"},
+       ...subs.map(x=>({g:"Recent checks",t:x.preview.slice(0,70),s:LBL[x.status]||"",id:x.id}))];palFilter()}
+function palFilter(){const q=$("#palIn").value.toLowerCase().trim(),items=PAL.filter(p=>!q||p.t.toLowerCase().includes(q)).slice(0,14);palSel=0;window._palItems=items;
+  let last="";$("#palList").innerHTML=items.length?items.map((p,i)=>{const h=p.g!==last?`<div class="pgl">${p.g}</div>`:"";last=p.g;return h+`<div class="pi ${i===0?"on":""}" data-i="${i}">${esc(p.t)}<small>${esc(p.s||"")}</small></div>`}).join(""):`<div class="empty">No matches</div>`}
+function palGo(i){const p=window._palItems[i];if(!p)return;closeAll();if(p.go)location.hash=p.go;else openDetail(p.id)}
+function closeAll(){["#drawer","#pal"].forEach(s=>$(s).classList.remove("on"));$("#shade").classList.remove("on")}
+$("#palIn").addEventListener("input",palFilter);
+$("#palList").addEventListener("click",e=>{const el=e.target.closest(".pi");if(el)palGo(+el.dataset.i)});
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();openPalette();return}
+  if(e.key==="Escape"){closeAll();return}
+  if($("#pal").classList.contains("on")){const n=window._palItems.length;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();palSel=(palSel+(e.key==="ArrowDown"?1:-1)+n)%n;document.querySelectorAll(".pi").forEach((el,i)=>el.classList.toggle("on",i===palSel));document.querySelector(".pi.on")?.scrollIntoView({block:"nearest"})}
+    if(e.key==="Enter"){e.preventDefault();palGo(palSel)}}});
 
 /* ---------- actions ---------- */
 const A={
- closeDrawer,
+ closeAll,palette:openPalette,
  open:d=>openDetail(d.id),
  pick:d=>{location.hash="#/review/"+d.id},
  filter:d=>{FILTER=d.k;render()},
- example:d=>{const e=EXAMPLES[d.k];$("#text").value=e[1];$("#disc").checked=true},
+ ctype:d=>{CTYPE=d.v;document.querySelectorAll("#ctype button").forEach(b=>b.classList.toggle("on",b.dataset.v===d.v))},
+ example:d=>{const e=EXAMPLES[d.k];$("#text").value=e[1];$("#disc").checked=true;$("#cc").textContent=e[1].length+" characters"},
  async runCheck(){const text=$("#text").value.trim();if(text.length<5){toast("Paste some text first");return}
    const b=$("#go");b.disabled=true;b.innerHTML='<span class="spin" style="border-top-color:#fff;border-color:#777"></span>Checking…';
-   $("#out").innerHTML=`<div class="card">${loading("Splitting claims, looking up verses, judging against your commitments…")}</div>`;
-   try{const r=await send("POST","/api/check",{church_id:+cid(),text,content_type:$("#ctype").value,ai_disclosed:$("#disc").checked});
+   $("#out").innerHTML=`<div class="card"><div class="mut" style="margin-bottom:12px">Splitting claims, looking up verses, judging against your commitments…</div>${skel(70,3)}</div>`;
+   try{const r=await send("POST","/api/check",{church_id:+cid(),text,content_type:CTYPE,ai_disclosed:$("#disc").checked});
      const d=await api("/api/submissions/"+r.submission_id);
-     $("#out").innerHTML=`<div class="card">${resultHTML(d)}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${r.submission_id}">Open in review queue</a></div>`:""}</div>`;refreshPending()}
+     $("#out").innerHTML=`<div class="card">${resultHTML(d)}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${r.submission_id}">Open in review queue</a></div>`:""}</div>`;refreshPending();loadHealth()}
    catch(e){$("#out").innerHTML=`<div class="card empty"><b>Check failed</b>${esc(e.message)}</div>`}
    b.disabled=false;b.textContent="Check content"},
  async decide(d){const id=d.id,pat=($("#rp-"+id)||{}).value||"";
    try{await send("POST",`/api/submissions/${id}/decide`,{decision:d.d,reviewer:"pastor",edited_text:d.d==="edited"?$("#ed-"+id).value:"",save_ruling:!!pat.trim(),claim_pattern:pat.trim(),note:($("#rn-"+id)||{}).value||""});
-     toast(d.d==="rejected"?"Rejected":"Approved"+(pat.trim()?" and saved as a ruling":""));closeDrawer();location.hash.startsWith("#/review/")?(location.hash="#/review"):render()}
+     toast(d.d==="rejected"?"Rejected":"Approved"+(pat.trim()?" and saved as a ruling":""));closeAll();location.hash.startsWith("#/review/")?(location.hash="#/review"):render()}
    catch(e){toast(e.message)}},
  async approveC(d){try{await send("POST",`/api/commitments/${d.id}/approve`);toast("Commitment approved");render()}catch(e){toast(e.message)}},
  async approveAll(){const ids=[...document.querySelectorAll('[data-act="approveC"]')].map(b=>b.dataset.id);for(const id of ids)await send("POST",`/api/commitments/${id}/approve`);toast(ids.length+" approved");render()},
  async delC(d){if(!confirm("Remove this commitment?"))return;await send("DELETE","/api/commitments/"+d.id);render()},
- editC(d){const li=$("#cm-"+d.id),t=li.querySelector("div[style*='font-size:15px']").textContent;
+ editC(d){const li=$("#cm-"+d.id),t=li.querySelector(".ctext").textContent;
    li.innerHTML=`<textarea class="sm" id="ec-${d.id}">${esc(t)}</textarea><div class="row" style="margin-top:8px"><button class="btn sm" data-act="saveC" data-id="${d.id}">Save as draft</button><button class="btn ghost sm" data-act="cancelC">Cancel</button></div>`},
  cancelC:()=>render(),
  async saveC(d){await send("PUT","/api/commitments/"+d.id,{text:$("#ec-"+d.id).value});toast("Saved. Approve it again to use it.");render()},
@@ -399,12 +543,11 @@ const A={
    try{const r=await send("POST",`/api/churches/${cid()}/statement`,{text:t});toast(r.length+" commitments drafted. Review and approve them.");render()}
    catch(e){toast(e.message);b.disabled=false;b.textContent="Draft commitments"}},
  async delR(d){await send("DELETE","/api/rulings/"+d.id);toast("Ruling retired");render()}};
-document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el)return;if(el.tagName==="A")return;const f=A[el.dataset.act];if(f)f(el.dataset)});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el||el.tagName==="A")return;const f=A[el.dataset.act];if(f)f(el.dataset)});
 
 /* ---------- boot ---------- */
 (async()=>{const cs=await api("/api/churches");$("#church").innerHTML=cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
-  $("#church").onchange=()=>{window._pending=0;render()};render()})();
+  $("#church").onchange=()=>{window._pending=0;render()};render();loadHealth();setInterval(loadHealth,60000)})();
 </script>
 </body>
 </html>

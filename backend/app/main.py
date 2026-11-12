@@ -175,6 +175,31 @@ def stats(cid: int):
             "blocked": by.get("blocked", 0), "pending": pending, "decided": decided,
             "commitments_approved": com.get("approved", 0), "commitments_draft": com.get("draft", 0), "rulings": rul}
 
+@app.get("/api/churches/{cid}/timeline")
+def timeline(cid: int, days: int = 14):
+    """Checks per day by verdict, zero-filled, oldest first."""
+    from datetime import date, timedelta
+    start = date.today() - timedelta(days=days - 1)
+    out = {(start + timedelta(d)).isoformat(): {"approved": 0, "needs_review": 0, "blocked": 0} for d in range(days)}
+    with db.session() as c:
+        for r in c.execute(
+            """SELECT date(s.created_at) d, v.status st, COUNT(*) n FROM submission s JOIN verdict v ON v.submission_id=s.id
+               WHERE s.church_id=? AND date(s.created_at)>=? GROUP BY d, st""", (cid, start.isoformat())):
+            if r["d"] in out and r["st"] in out[r["d"]]:
+                out[r["d"]][r["st"]] = r["n"]
+    return [{"day": k, **v} for k, v in out.items()]
+
+@app.get("/api/health")
+def health():
+    """Is the judging model reachable? Reports state only; makes no model call."""
+    import time
+    keys = llm._gemini_keys()
+    has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    live = [(ki, m) for ki in range(len(keys)) for m in llm.GEMINI_MODELS if llm._dead.get((ki, m), 0) <= time.time()]
+    recent_fail = llm._last_fail > llm._last_ok and time.time() - llm._last_fail < 1800
+    state = "offline" if not (keys or has_anthropic) else ("limited" if (not live or recent_fail) else "online")
+    return {"judge": state, "keys": len(keys), "models": llm.GEMINI_MODELS}
+
 @app.get("/api/audit")
 def audit_log(limit: int = 60):
     with db.session() as c:
