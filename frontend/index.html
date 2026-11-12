@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plumbline</title>
+<style>
+:root{--bg:#fafaf7;--fg:#1d1d1b;--mut:#6b6b66;--card:#fff;--line:#e2e0d8;--ok:#2e7d32;--warn:#b26a00;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#161614;--fg:#eeeee8;--mut:#9a9a92;--card:#201f1d;--line:#38362f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px}
+h1{margin:0 0 4px}textarea,select,button{font:inherit;width:100%;box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+textarea{min-height:160px}button{background:var(--fg);color:var(--bg);cursor:pointer;width:auto;padding:10px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:14px 0}
+.pill{display:inline-block;padding:2px 12px;border-radius:99px;color:#fff;font-weight:600}
+.approved{background:var(--ok)}.needs_review{background:var(--warn)}.blocked{background:var(--bad)}
+.mut{color:var(--mut);font-size:14px}h2{font-size:18px}
+</style></head><body><main>
+<h1>Plumbline</h1><div class="mut">Checks AI-written church content against your own statement of faith and Scripture. A pastor always decides.</div>
+<div class="card"><label>Church <select id="church"></select></label>
+<textarea id="text" placeholder="Paste AI-written text here (synthetic data only)"></textarea>
+<label><input type="checkbox" id="disc" style="width:auto"> AI use is disclosed</label><br>
+<button id="go">Check</button></div>
+<div id="out"></div>
+<h2>Pastor review queue</h2><div id="queue" class="mut">Nothing waiting.</div>
+<script>
+const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const label={approved:"Approved",needs_review:"Needs pastor review",blocked:"Blocked"};
+async function j(u,o){const r=await fetch(u,o);return r.json()}
+async function loadChurches(){const cs=await j("/api/churches");$("church").innerHTML=cs.map(c=>`<option value=${c.id}>${esc(c.name)}</option>`).join("");loadQueue()}
+async function loadQueue(){const q=await j("/api/queue?church_id="+$("church").value);
+ $("queue").innerHTML=q.length?q.map(i=>`<div class="card"><span class="pill ${i.status}">${label[i.status]}</span> <span class="mut">#${i.id}</span>
+ <p>${esc(i.preview)}…</p><ul>${JSON.parse(i.reasons).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+ <button onclick="decide(${i.id},'approved')">Approve</button> <button onclick="decide(${i.id},'rejected')">Reject</button></div>`).join(""):"Nothing waiting."}
+async function decide(id,d){await j(`/api/submissions/${id}/decide`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision:d,reviewer:"pastor"})});loadQueue()}
+$("church").onchange=loadQueue;
+$("go").onclick=async()=>{$("go").disabled=true;$("out").innerHTML="Checking…";
+ const v=await j("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({church_id:+$("church").value,text:$("text").value,ai_disclosed:$("disc").checked})});
+ $("out").innerHTML=`<div class="card"><span class="pill ${v.status}">${label[v.status]}</span><ul>${v.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+ ${v.findings.map(f=>`<p class="mut">${esc(f.label)} (${f.confidence}) — ${esc(f.evidence)}${f.suggested_fix?"<br>Fix: "+esc(f.suggested_fix):""}</p>`).join("")}
+ <p class="mut">${esc(v.ai_disclosure)}</p></div>`;$("go").disabled=false;loadQueue()};
+loadChurches();
+</script></main></body></html>
