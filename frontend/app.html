@@ -192,6 +192,7 @@ tr.click{cursor:pointer}tr.click:hover td{background:var(--linen)}
 .check-line{font-size:13px;color:var(--graphite);padding:9px 0 0;margin-top:9px;border-top:1px dashed var(--line)}
 .verse{font-size:12.5px;color:var(--ash);font-style:italic;margin-top:4px}
 blockquote{margin:0;padding:12px 16px;background:var(--linen);border-radius:10px;color:var(--graphite);font-size:13.5px;max-height:150px;overflow:auto;white-space:pre-wrap}
+blockquote.content{max-height:240px;font-size:14.5px;line-height:1.65;color:var(--ink);background:var(--paper);box-shadow:var(--ring)}
 .decide{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
 .fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12.5px}
 
@@ -355,13 +356,13 @@ function resultHTML(d,{withDecision=false}={}){
     ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
     ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div>`;
   const whyHTML=flags.length?`<div class="why"><h3>Why this was flagged <span class="mut">· ${flags.length} reason${flags.length>1?"s":""}</span></h3>${flags.map(flagHTML).join("")}</div>`:"";
-  return `<div class="verdict ${st}"><div class="vhead"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
+  return `<h3>Content</h3><blockquote class="content">${esc(s.raw_text)}</blockquote>
+    <div class="verdict ${st}" style="margin-top:16px"><div class="vhead"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
     <button class="btn ghost sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}" title="Run every check again on this same text">Check again</button></div>
     <div class="w">${LBL[st]}</div><div style="font-size:14px">${summary}</div>
     ${flags.length?"":`<ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`}${final}</div>
     ${whyHTML}
     <div class="miniKpis"><div><b>${all.length}</b><span>claims</span></div><div><b>${okV}/${verses.length}</b><span>verses verified</span></div><div><b style="color:${conflicts?"var(--bad)":"inherit"}">${conflicts}</b><span>conflicts</span></div><div><b style="color:${risks?"var(--bad)":"inherit"}">${risks}</b><span>risks</span></div></div>
-    <h3>Content</h3><blockquote>${esc(s.raw_text)}</blockquote>
     <h3 style="margin-top:20px">What we checked</h3>
     ${claimHTML||`<div class="mut">No separate claims were extracted.</div>`}${loose?`<h3 style="margin-top:20px">Other references found in the text</h3>${loose}`:""}
     <div class="mut" style="margin-top:18px">${esc(d.ai_disclosure)}</div>
