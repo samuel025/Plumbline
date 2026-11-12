@@ -84,13 +84,14 @@ def run(submission_id: int) -> dict:
             cl["id"] = cur.lastrowid
         for s in scripture:
             cid = claims[s["claim_index"]]["id"] if s["claim_index"] is not None else None
-            c.execute("INSERT INTO scripture_check(claim_id,reference,quoted_text,bible_text,result) VALUES(?,?,?,?,?)",
-                      (cid, s["reference"], None, s["bible_text"], s["result"]))
+            quoted = claims[s["claim_index"]].get("quoted_text") if s["claim_index"] is not None else None
+            c.execute("INSERT INTO scripture_check(submission_id,claim_id,reference,quoted_text,bible_text,result) VALUES(?,?,?,?,?,?)",
+                      (submission_id, cid, s["reference"], quoted, s["bible_text"], s["result"]))
         for f in findings:
             idx = f.get("claim_index")
             cid = claims[idx]["id"] if isinstance(idx, int) and 0 <= idx < len(claims) else None
-            c.execute("INSERT INTO finding(claim_id,commitment_id,label,confidence,evidence,suggested_fix) VALUES(?,?,?,?,?,?)",
-                      (cid, f.get("commitment_id"), f["label"], f.get("confidence", 0), f.get("evidence"), f.get("suggested_fix")))
+            c.execute("INSERT INTO finding(submission_id,claim_id,commitment_id,label,confidence,evidence,suggested_fix) VALUES(?,?,?,?,?,?,?)",
+                      (submission_id, cid, f.get("commitment_id"), f["label"], f.get("confidence", 0), f.get("evidence"), f.get("suggested_fix")))
         db.audit(c, "system", "verdict:" + status, f"submission:{submission_id}")
     return {"submission_id": submission_id, "status": status, "reasons": reasons,
             "claims": claims, "scripture": scripture, "findings": findings,

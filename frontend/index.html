@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Plumbline</title>
+<title>Plumbline — a review layer for church AI</title>
+<meta name="description" content="Plumbline checks AI-written church content against your own statement of faith and against Scripture, then tells a pastor what is safe to use and why.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -12,178 +13,329 @@
   --ink:#1b0624; --espresso:#160f0c; --ash:#766a7c; --graphite:#444; --stone:#898683;
   --linen:#f7f7f5; --paper:#fff; --bone:#edece7; --mist:#eee;
   --ring:inset 0 0 0 1px rgba(0,0,0,.07);
-  /* verdict marks: the one deliberate use of color, kept muted so the page stays near-achromatic */
-  --ok:#3f6b4f; --warn:#a8741a; --bad:#9b2c2c;
+  --ok:#3f6b4f; --ok-bg:#e8f0ea; --warn:#a8741a; --warn-bg:#f6eedd; --bad:#9b2c2c; --bad-bg:#f6e4e2;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--linen);color:var(--ink);font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--linen);color:var(--ink);font:17px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   font-feature-settings:"cv11","tnum";-webkit-font-smoothing:antialiased}
-.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+a{color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
 
 /* nav */
-nav{background:var(--paper)}
-nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:18px;letter-spacing:-.01em}
-.mark{width:14px;height:26px;display:block}
-.who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ash)}
-.who select{width:auto;max-width:46vw;padding:8px 36px 8px 16px;margin:0;border-radius:999px;font-size:14px;
-  appearance:none;background:var(--mist) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23444' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 16px center}
+.top{position:absolute;top:0;left:0;right:0;z-index:5}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:19px;letter-spacing:-.02em;text-decoration:none}
+.brand svg{width:12px;height:24px}
+.links{display:flex;gap:32px;font-size:15px;color:var(--graphite)}
+.links a{text-decoration:none}.links a:hover{color:var(--ink)}
+@media(max-width:820px){.links{display:none}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:11px 22px;background:var(--espresso);color:#fff;text-decoration:none;font-size:15px;border:1px solid var(--espresso);transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn.lg{border-radius:60px;padding:20px 34px;font-size:17px}
+.btn.ghost{background:rgba(255,255,255,.55);color:var(--ink);border-color:rgba(27,6,36,.25)}
+.btn.ghost:hover{background:#fff;opacity:1}
 
 /* hero */
-.hero{padding:88px 0 56px}
-h1{font-weight:400;font-size:clamp(42px,8vw,76px);line-height:1;letter-spacing:-.06em;margin:0 0 24px;max-width:13ch}
-.lede{font-size:20px;line-height:1.4;letter-spacing:-.01em;color:var(--graphite);max-width:34em;margin:0}
-.rule{display:flex;align-items:center;gap:12px;margin:32px 0 0;color:var(--ash);font-size:14px}
-.rule i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.hero{position:relative;overflow:hidden;min-height:860px;text-align:center;padding-top:148px;background:linear-gradient(#fcefe4 0%,#f9dccb 38%,#f3c1ad 62%,#eaa090 100%)}
+.hero .wrap{position:relative;z-index:2}
+.pill{display:inline-block;background:var(--espresso);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;margin-bottom:28px}
+h1{font-weight:400;font-size:clamp(46px,9vw,88px);line-height:1;letter-spacing:-.06em;margin:0 auto 26px;max-width:15ch}
+.lede{font-size:20px;line-height:1.45;letter-spacing:-.01em;color:#4a3340;max-width:36em;margin:0 auto 36px}
+.ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.art{position:absolute;left:0;right:0;bottom:0;height:470px;z-index:1}
+.art svg{display:block;width:100%;height:100%}
+.plumb{position:absolute;top:0;right:4%;bottom:140px;width:1.6px;background:var(--ink);z-index:2}
+.plumb::after{content:"";position:absolute;left:50%;bottom:-26px;width:20px;height:28px;transform:translateX(-50%);background:var(--ink);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+@media(max-width:700px){.plumb{right:4px}}
+.fade{position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(to bottom,rgba(247,247,245,0),var(--linen));z-index:2}
+@media(max-width:700px){.hero{min-height:760px;padding-top:120px}.art{height:340px}.lede{font-size:18px}}
+
+/* strip */
+.strip{padding:48px 0 8px;text-align:center}
+.strip .label{font-size:13px;color:var(--stone);margin-bottom:18px}
+.strip ul{display:flex;gap:10px 34px;justify-content:center;flex-wrap:wrap;list-style:none;margin:0;padding:0;font-size:18px;letter-spacing:-.01em;color:var(--stone)}
 
 /* sections */
-section{padding:48px 0;border-top:1px solid rgba(0,0,0,.08)}
-.step{display:grid;grid-template-columns:200px 1fr;gap:32px}
-@media(max-width:760px){.step{grid-template-columns:1fr;gap:16px}.hero{padding:56px 0 32px}}
-.num{font-size:14px;color:var(--ash);margin-bottom:8px}
-h2{font-weight:400;font-size:32px;line-height:1.2;letter-spacing:-.03em;margin:0 0 8px}
-.side p{color:var(--ash);font-size:14px;line-height:1.5;margin:0}
+section{padding:112px 0}
+.eyebrow{font-size:13px;color:var(--ash);margin-bottom:14px}
+h2{font-weight:400;font-size:clamp(34px,5.2vw,52px);line-height:1.08;letter-spacing:-.05em;margin:0 0 20px;max-width:18ch}
+h2.wide{max-width:22ch}
+.copy{font-size:19px;line-height:1.5;color:var(--graphite);max-width:36em;letter-spacing:-.005em}
+h3{font-weight:500;font-size:22px;letter-spacing:-.02em;margin:0 0 8px;line-height:1.25}
+.grid{display:grid;gap:16px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:960px){.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g3,.g2,.g4{grid-template-columns:1fr}section{padding:80px 0}}
+.card{background:var(--paper);box-shadow:var(--ring);border-radius:16px;padding:32px}
+.card p{margin:0;color:var(--graphite);font-size:16px;line-height:1.55}
+.ic{width:26px;height:26px;stroke:var(--charcoal,#292421);fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;margin-bottom:56px;display:block}
+.num{font-size:13px;color:var(--stone);margin-bottom:56px}
+.problem{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+@media(max-width:860px){.problem{grid-template-columns:1fr;gap:24px}}
+.quote-list{list-style:none;margin:0;padding:0}
+.quote-list li{padding:18px 0;border-top:1px solid rgba(0,0,0,.09);font-size:19px;letter-spacing:-.01em;color:var(--graphite)}
+.quote-list li:last-child{border-bottom:1px solid rgba(0,0,0,.09)}
 
-/* cards + controls */
-.card{background:var(--paper);box-shadow:var(--ring);border-radius:16px;padding:24px;margin:0 0 16px}
-textarea,input[type=text],input:not([type]){width:100%;padding:12px 14px;margin:0 0 12px;border:1px solid var(--stone);border-radius:8px;
-  background:var(--mist);color:var(--ink);font:inherit;font-size:16px;outline:none}
-textarea{min-height:150px;resize:vertical}
-textarea.sm{min-height:72px}
-textarea:focus,input:focus,select:focus{border-color:var(--espresso)}
-::placeholder{color:var(--stone)}
-button{font:inherit;font-size:15px;cursor:pointer;border-radius:999px;padding:10px 22px;border:1px solid var(--espresso);background:var(--espresso);color:#fff;transition:opacity .15s}
-button:hover{opacity:.86}
-button:disabled{opacity:.45;cursor:default}
-button.ghost{background:transparent;color:var(--ink);border-color:var(--stone)}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.check{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--graphite);margin:0 0 16px}
-.check input{width:18px;height:18px;margin:0;accent-color:var(--espresso)}
-.mut{color:var(--ash);font-size:14px;line-height:1.5}
-.empty{color:var(--stone);font-size:14px;padding:8px 0}
+/* product preview */
+.preview{background:var(--bone);border-radius:24px;padding:40px}
+@media(max-width:640px){.preview{padding:16px}}
+.win{background:var(--paper);border-radius:16px;box-shadow:var(--ring);overflow:hidden}
+.win .bar{display:flex;gap:6px;padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.07)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:var(--mist)}
+.win .body{display:grid;grid-template-columns:1fr 1.15fr;gap:0}
+@media(max-width:860px){.win .body{grid-template-columns:1fr}}
+.win .l{padding:26px;border-right:1px solid rgba(0,0,0,.07);font-size:15px;color:var(--graphite)}
+@media(max-width:860px){.win .l{border-right:0;border-bottom:1px solid rgba(0,0,0,.07)}}
+.win .r{padding:26px}
+.mini-label{font-size:12px;color:var(--stone);margin-bottom:8px}
+.hl{background:#f6e4e2;border-radius:4px;padding:0 3px}
+.hl2{background:#f6eedd;border-radius:4px;padding:0 3px}
+.verdict{background:var(--warn-bg);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.verdict b{display:block;font-weight:400;font-size:28px;letter-spacing:-.05em;color:#7a5410;margin:6px 0 2px}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:3px 11px 3px 9px;border-radius:999px;font-size:12px;font-weight:500;background:var(--bone);white-space:nowrap}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--stone)}
+.badge.approved{background:var(--ok-bg);color:var(--ok)}.badge.approved::before{background:var(--ok)}
+.badge.needs_review{background:var(--warn-bg);color:#7a5410}.badge.needs_review::before{background:var(--warn)}
+.badge.blocked{background:var(--bad-bg);color:var(--bad)}.badge.blocked::before{background:var(--bad)}
+.finding{font-size:14px;color:var(--graphite);padding:11px 0;border-top:1px solid rgba(0,0,0,.07)}
+.finding .t{font-weight:500;color:var(--ink)}
 
-/* verdict */
-.badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 10px;border-radius:999px;background:var(--bone);font-size:13px;font-weight:500}
-.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--stone)}
-.badge.approved::before{background:var(--ok)}.badge.needs_review::before{background:var(--warn)}.badge.blocked::before{background:var(--bad)}
-.verdict-word{font-size:44px;line-height:1.1;letter-spacing:-.05em;margin:14px 0 12px}
-.reasons{margin:0 0 8px;padding:0;list-style:none}
-.reasons li{padding:12px 0;border-top:1px solid rgba(0,0,0,.07);font-size:15px;color:var(--graphite)}
-.finding{font-size:14px;color:var(--ash);border-top:1px solid rgba(0,0,0,.07);padding:12px 0}
-.finding b{color:var(--ink);font-weight:500}
-.fix{color:var(--graphite);margin-top:4px}
-.disc{font-size:13px;color:var(--stone);margin-top:12px}
-.ruling-head{font-weight:500;letter-spacing:-.01em}
-footer{padding:40px 0 64px;color:var(--stone);font-size:13px;border-top:1px solid rgba(0,0,0,.08)}
+/* steps */
+.steps{counter-reset:s}
+.step{padding:34px;min-height:300px;display:flex;flex-direction:column}
+.step h3{min-height:2.6em}
+.step .num{margin-bottom:48px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:56px}
+@media(max-width:760px){.stats{grid-template-columns:1fr}}
+.stat .n{font-size:clamp(56px,8vw,88px);line-height:1;letter-spacing:-.06em}
+.stat .d{font-size:15px;color:var(--ash);margin-top:12px;max-width:20em}
+.fine{font-size:14px;color:var(--stone);margin-top:40px;max-width:46em}
+
+/* outcomes */
+.out{padding:32px;border-radius:16px}
+.out.approved{background:var(--ok-bg)}.out.needs_review{background:var(--warn-bg)}.out.blocked{background:var(--bad-bg)}
+.out h3{font-weight:400;font-size:32px;letter-spacing:-.05em;margin:14px 0 10px}
+.out.approved h3{color:var(--ok)}.out.needs_review h3{color:#7a5410}.out.blocked h3{color:var(--bad)}
+.out p{color:var(--graphite);font-size:16px;margin:0}
+
+/* compare */
+.cmp{padding:28px}
+.cmp .q{font-size:20px;letter-spacing:-.02em;line-height:1.35;margin:14px 0 22px}
+.cmp .who{font-size:13px;color:var(--ash)}
+
+/* dev */
+pre{background:var(--espresso);color:#f1efe9;border-radius:16px;padding:26px 28px;overflow:auto;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;margin:0}
+.dev{display:grid;grid-template-columns:1fr 1.2fr;gap:56px;align-items:center}
+@media(max-width:900px){.dev{grid-template-columns:1fr;gap:32px}}
+
+/* principles */
+.pr{display:grid;grid-template-columns:repeat(2,1fr);gap:0 64px}
+@media(max-width:760px){.pr{grid-template-columns:1fr}}
+.pr div{padding:26px 0;border-top:1px solid rgba(0,0,0,.1)}
+.pr h3{font-size:19px}.pr p{margin:0;color:var(--graphite);font-size:16px}
+
+/* cta + footer */
+.cta{text-align:center;padding:120px 0}
+.cta h2{margin-left:auto;margin-right:auto;max-width:14ch;font-size:clamp(40px,7vw,72px)}
+footer{border-top:1px solid rgba(0,0,0,.09);padding:36px 0 56px;color:var(--stone);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
 </style>
 </head>
 <body>
 
-<nav><div class="wrap">
-  <div class="brand">
-    <svg class="mark" viewBox="0 0 14 26" fill="none" stroke="#1b0624" stroke-width="1.4" aria-hidden="true"><path d="M7 0v17"/><path d="M7 17l5 4.5-5 4.5-5-4.5z" fill="#1b0624"/></svg>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/">
+    <svg viewBox="0 0 14 26" fill="none" stroke="#1b0624" stroke-width="1.4" aria-hidden="true"><path d="M7 0v17"/><path d="M7 17l5 4.5-5 4.5-5-4.5z" fill="#1b0624"/></svg>
     Plumbline
-  </div>
-  <label class="who">Church <select id="church" aria-label="Church"></select></label>
-</div></nav>
+  </a>
+  <nav class="links"><a href="#problem">The problem</a><a href="#how">How it works</a><a href="#checks">What it checks</a><a href="#proof">Proof</a><a href="#developers">Developers</a></nav>
+  <a class="btn" href="/app">Open the app</a>
+</div></header>
 
-<main class="wrap">
-  <header class="hero">
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <div class="pill">A review layer for church AI</div>
     <h1>Would your pastor publish this?</h1>
-    <p class="lede">Plumbline checks AI-written church content against your own statement of faith and against Scripture, then tells a pastor what is safe to use and why.</p>
-    <div class="rule"><i></i> Doubt never approves. A pastor always decides.</div>
-  </header>
+    <p class="lede">Plumbline checks AI-written content against your church's own statement of faith and against Scripture, then tells a pastor what is safe to use, what needs a human look, and why.</p>
+    <div class="ctas"><a class="btn lg" href="/app">Open the app</a><a class="btn lg ghost" href="#how">See how it works</a></div>
+  </div>
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 1440 470" preserveAspectRatio="xMidYMax slice">
+      <defs>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff3d2" stop-opacity=".95"/><stop offset="1" stop-color="#fff3d2" stop-opacity="0"/></radialGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6a392"/><stop offset="1" stop-color="#b98597"/></linearGradient>
+        <linearGradient id="meadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b9a6c"/><stop offset="1" stop-color="#5f7556"/></linearGradient>
+      </defs>
+      <circle cx="560" cy="212" r="190" fill="url(#glow)"/>
+      <circle cx="560" cy="226" r="58" fill="#fde3b4"/>
+      <path d="M0 262 L120 214 L230 250 L360 186 L470 244 L600 204 L720 250 L860 176 L990 240 L1120 198 L1250 246 L1360 206 L1440 236 L1440 300 L0 300Z" fill="#cfa4a6" opacity=".72"/>
+      <path d="M0 292 L150 246 L290 284 L430 232 L560 280 L700 238 L840 286 L980 226 L1120 280 L1260 240 L1440 282 L1440 330 L0 330Z" fill="#b68592" opacity=".85"/>
+      <rect x="0" y="300" width="1440" height="110" fill="url(#water)"/>
+      <g fill="#fde3b4" opacity=".75"><ellipse cx="560" cy="318" rx="70" ry="4"/><ellipse cx="560" cy="332" rx="46" ry="3"/><ellipse cx="548" cy="347" rx="28" ry="2.5"/><ellipse cx="574" cy="362" rx="14" ry="2"/></g>
+      <path d="M0 386 C 180 346, 340 372, 520 358 S 860 340, 1040 366 S 1320 350, 1440 372 L1440 470 L0 470Z" fill="url(#meadow)"/>
+      <path d="M0 430 C 220 402, 420 424, 640 410 S 1050 396, 1240 418 S 1400 410, 1440 420 L1440 470 L0 470Z" fill="#4c6448"/>
+    </svg>
+  </div>
+  <div class="plumb" aria-hidden="true"></div>
+  <div class="fade"></div>
+</div>
 
-  <section class="step">
-    <div class="side"><div class="num">01</div><h2>Set the standard</h2><p>Paste your statement of faith. Nothing counts until a pastor approves it.</p></div>
-    <div>
-      <div class="card">
-        <textarea id="stmt" placeholder="Paste a statement of faith (synthetic data only)"></textarea>
-        <button id="extract">Draft commitments</button>
+<!-- STRIP -->
+<div class="strip"><div class="wrap">
+  <div class="label">Checks anything a church asks AI to write</div>
+  <ul><li>Devotionals</li><li>Sermon outlines</li><li>Small-group guides</li><li>Replies to congregants</li><li>Newsletters</li></ul>
+</div></div>
+
+<!-- PROBLEM -->
+<section id="problem"><div class="wrap problem">
+  <div>
+    <div class="eyebrow">The problem</div>
+    <h2>Pastors have no fast way to check AI.</h2>
+    <p class="copy">Churches are starting to use AI for devotionals, sermon outlines, small-group guides and replies to the people they serve. General-purpose AI drifts from a church's doctrine, misquotes or invents verses, and answers hurting people with confident advice.</p>
+    <p class="copy" style="margin-top:18px">So pastors either avoid AI altogether, or publish it unreviewed.</p>
+  </div>
+  <ul class="quote-list">
+    <li>“It quoted a verse that does not exist.”</li>
+    <li>“It sounds right, but it is not what we teach.”</li>
+    <li>“It told a grieving member to just pray more.”</li>
+    <li>“I do not have time to read everything it writes.”</li>
+  </ul>
+</div></section>
+
+<!-- PRODUCT PREVIEW -->
+<section style="padding-top:0"><div class="wrap">
+  <div class="preview"><div class="win">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="body">
+      <div class="l">
+        <div class="mini-label">AI-written devotional · Harbor Grace Church</div>
+        “Take heart this week. <span class="hl">As Hezekiah 4:2 says, God helps those who help themselves.</span> <span class="hl2">Do enough good this season and God will count it toward your salvation.</span> Rest in his care.”
       </div>
-      <div id="drafts"></div>
-    </div>
-  </section>
-
-  <section class="step">
-    <div class="side"><div class="num">02</div><h2>Check content</h2><p>Every claim and every verse is checked. Anything uncertain goes to a person.</p></div>
-    <div>
-      <div class="card">
-        <textarea id="text" placeholder="Paste AI-written text here (synthetic data only)"></textarea>
-        <label class="check"><input type="checkbox" id="disc"> AI use is disclosed to the congregation</label>
-        <button id="go">Check</button>
+      <div class="r">
+        <div class="verdict"><span class="badge needs_review">Needs pastor review</span><b>Needs pastor review</b><span style="font-size:14px;color:var(--graphite)">A person should look at this before it is used.</span></div>
+        <div class="finding"><span class="t">Reference not found.</span> There is no Hezekiah 4:2 in the Bible text.</div>
+        <div class="finding"><span class="t">Conflicts with your commitment:</span> “Salvation is by grace alone, through faith alone, in Christ alone; works are the fruit, not the root.”</div>
+        <div class="finding"><span class="t">Suggested fix:</span> Rely wholly on God's grace through faith in Christ.</div>
       </div>
-      <div id="out"></div>
     </div>
-  </section>
+  </div></div>
+</div></section>
 
-  <section class="step">
-    <div class="side"><div class="num">03</div><h2>Pastor review</h2><p>Approve, edit or reject. Save a ruling and it guides similar claims later.</p></div>
-    <div><div id="queue"></div></div>
-  </section>
+<!-- HOW IT WORKS -->
+<section id="how" style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">How it works</div>
+  <h2>From statement of faith to a verdict in four steps.</h2>
+  <p class="copy" style="margin-bottom:56px">Your church sets the standard once. After that, anyone can submit content and a pastor only sees what needs a pastor.</p>
+  <div class="grid g4 steps">
+    <div class="card step"><div class="num">01</div><h3>Set the standard</h3><p>Upload your statement of faith. Plumbline drafts a short list of commitments, each with the line it came from. A pastor edits and approves them.</p></div>
+    <div class="card step"><div class="num">02</div><h3>Submit content</h3><p>Paste or upload AI-written text, or let another church tool send it through the API.</p></div>
+    <div class="card step"><div class="num">03</div><h3>Every claim is checked</h3><p>The text is split into claims. Each verse is looked up in the Bible text and each claim is judged against your commitments.</p></div>
+    <div class="card step"><div class="num">04</div><h3>A pastor decides</h3><p>You get one verdict with the evidence behind each flag. Doubtful items wait in a review queue for a person.</p></div>
+  </div>
+</div></section>
 
-  <section class="step">
-    <div class="side"><div class="num">04</div><h2>Rulings</h2><p>This church's own precedent. Remove one to retire it.</p></div>
-    <div><div id="rulings"></div></div>
-  </section>
+<!-- WHAT IT CHECKS -->
+<section id="checks" style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">What it checks</div>
+  <h2 class="wide">Three checks on every claim.</h2>
+  <p class="copy" style="margin-bottom:56px">The verdict engine approves only when all three come back clean.</p>
+  <div class="grid g3">
+    <div class="card"><svg class="ic" viewBox="0 0 24 24"><path d="M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M9 9h5M9 13h5"/></svg><h3>Scripture check</h3><p>Every reference is looked up in a public-domain Bible text. Quotes are marked exact, faithful paraphrase, misquote, or reference not found. Invented books are caught too.</p></div>
+    <div class="card"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v18M5 7l7-4 7 4M5 7l-2 6a3 3 0 006 0zM19 7l-2 6a3 3 0 006 0z"/></svg><h3>Doctrine judge</h3><p>Each claim is weighed against your own approved commitments and your pastors' past rulings: aligned, conflicts, silent, or contested. It never decides which theology is right.</p></div>
+    <div class="card"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg><h3>Risk checks</h3><p>Crisis language, abuse disclosures, medical or legal advice, replacing professional help, personal information, and content that claims a pastor wrote it.</p></div>
+  </div>
+</div></section>
 
-  <footer>Plumbline is an AI assistant to the pastor, never a replacement. It does not judge which theology is right; it checks content against this church's own written standard. Synthetic data only.</footer>
-</main>
+<!-- OUTCOMES -->
+<section style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">The verdict</div>
+  <h2 class="wide">One of three outcomes. Doubt never approves.</h2>
+  <p class="copy" style="margin-bottom:56px">If your statement of faith is silent on a claim, or the model is unsure, or the model is down, the item goes to a person. Never to publication.</p>
+  <div class="grid g3">
+    <div class="out approved"><span class="badge approved">Approved</span><h3>Safe to use</h3><p>Every claim aligns with your commitments and every verse checks out.</p></div>
+    <div class="out needs_review"><span class="badge needs_review">Needs pastor review</span><h3>A human look</h3><p>A conflict, a silent area, a bad verse, or low confidence. You see the evidence and a suggested fix.</p></div>
+    <div class="out blocked"><span class="badge blocked">Blocked</span><h3>Route to a pastor</h3><p>Crisis or abuse language. Plumbline never writes a reply to a person in crisis. It stops and escalates.</p></div>
+  </div>
+</div></section>
 
-<script>
-const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const label={approved:"Approved",needs_review:"Needs pastor review",blocked:"Blocked"};
-const empty=t=>`<div class="empty">${t}</div>`;
-async function j(u,o){const r=await fetch(u,o);return r.json()}
-const post=(u,b)=>j(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+<!-- TWO CHURCHES -->
+<section style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">The church's own standard</div>
+  <h2 class="wide">The same sentence, two churches, two verdicts.</h2>
+  <p class="copy" style="margin-bottom:56px">Plumbline is not a generic safety filter. Your statement of faith is the rubric, so what passes at one church can need review at another.</p>
+  <div class="grid g2">
+    <div class="card cmp"><div class="who">Harbor Grace Church · Reformed Baptist</div><div class="q">“Only men may serve as elders and pastors in our church.”</div><span class="badge approved">Approved</span> <span style="font-size:14px;color:var(--ash)">Matches a commitment</span></div>
+    <div class="card cmp"><div class="who">Meridian Fellowship · Charismatic</div><div class="q">“Only men may serve as elders and pastors in our church.”</div><span class="badge needs_review">Needs pastor review</span> <span style="font-size:14px;color:var(--ash)">Conflicts with a commitment</span></div>
+  </div>
+  <div class="card" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:40px" id="rulings">
+    <div><h3>Pastor rulings become precedent.</h3><p>When a pastor approves or rejects something, they can save it as a ruling. Similar claims later are judged with that ruling in view, so the standard grows from the church's judgment, not the tool's.</p></div>
+    <div><h3>Every decision is logged.</h3><p>Who approved what, and when, is kept in an audit trail. Edits send a commitment back to draft until a pastor approves it again.</p></div>
+  </div>
+</div></section>
 
-async function loadChurches(){const cs=await j("/api/churches");
-  $("church").innerHTML=cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");refresh()}
-function refresh(){loadQueue();loadDrafts();loadRulings();$("out").innerHTML=""}
+<!-- PROOF -->
+<section id="proof" style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">Proof</div>
+  <h2 class="wide">Measured on a labeled test set, not a few demos.</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">40</div><div class="d">synthetic test items across six groups, from clean to crisis</div></div>
+    <div class="stat"><div class="n">27 of 27</div><div class="d">flawed items caught, with none let through as approved</div></div>
+    <div class="stat"><div class="n">0 of 13</div><div class="d">good items wrongly flagged on the same set</div></div>
+  </div>
+  <p class="fine">Honest note: this is our own set of synthetic items, and the prompts were tuned against it, so expect lower numbers on content it has not seen. The eval runs in one command so anyone can rerun it and see the misses.</p>
+</div></section>
 
-async function loadQueue(){const q=await j("/api/queue?church_id="+$("church").value);
-  $("queue").innerHTML=q.length?q.map(i=>`<div class="card"><span class="badge ${i.status}">${label[i.status]}</span> <span class="mut">#${i.id}</span>
-    <ul class="reasons">${JSON.parse(i.reasons).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
-    <textarea id="e${i.id}" class="sm" title="Edit the text before approving">${esc(i.raw_text)}</textarea>
-    <input id="p${i.id}" placeholder="Save as ruling: the kind of claim this covers (optional)">
-    <input id="n${i.id}" placeholder="Note for future reviewers (optional)">
-    <div class="row"><button onclick="decide(${i.id},'approved')">Approve</button>
-    <button class="ghost" onclick="decide(${i.id},'edited')">Approve with my edits</button>
-    <button class="ghost" onclick="decide(${i.id},'rejected')">Reject</button></div></div>`).join(""):empty("Nothing is waiting for review.")}
-async function decide(id,d){const pat=$("p"+id).value.trim();
-  await post(`/api/submissions/${id}/decide`,{decision:d,reviewer:"pastor",edited_text:d==="edited"?$("e"+id).value:"",save_ruling:!!pat,claim_pattern:pat,note:$("n"+id).value});
-  loadQueue();loadRulings()}
+<!-- DEVELOPERS -->
+<section id="developers" style="padding-top:40px"><div class="wrap dev">
+  <div>
+    <div class="eyebrow">For developers</div>
+    <h2>Guardrails for every church tool.</h2>
+    <p class="copy">Any other church tool can call Plumbline before it publishes AI-written content. One request returns the verdict, each claim, the verse lookups and the evidence.</p>
+    <div style="margin-top:28px"><a class="btn" href="/app#/dev">Read the API guide</a></div>
+  </div>
+<pre>curl -X POST /api/check \
+  -H "Content-Type: application/json" \
+  -d '{"church_id": 1,
+       "text": "God helps those who help
+                themselves (Hezekiah 4:2).",
+       "source_tool": "my-newsletter-app",
+       "ai_disclosed": true}'
 
-async function loadRulings(){const r=await j(`/api/churches/${$("church").value}/rulings`);
-  $("rulings").innerHTML=r.length?r.map(x=>`<div class="card"><div class="ruling-head">${esc(x.claim_pattern)} <span class="mut">→ ${esc(x.decision)}</span></div>
-    <div class="mut" style="margin:4px 0 12px">${esc(x.pastor_note)}</div><button class="ghost" onclick="delR(${x.id})">Remove</button></div>`).join(""):empty("No rulings yet.")}
-async function delR(id){await j("/api/rulings/"+id,{method:"DELETE"});loadRulings()}
+→ { "status": "needs_review",
+    "reasons": ["Scripture reference not
+                 found: Hezekiah 4:2"],
+    "claims": [...], "findings": [...] }</pre>
+</div></section>
 
-async function loadDrafts(){const cs=await j(`/api/churches/${$("church").value}/commitments`);
-  const d=cs.filter(c=>c.status==="draft"), a=cs.filter(c=>c.status==="approved").length;
-  $("drafts").innerHTML=(a?`<div class="mut" style="margin:0 0 12px">${a} approved commitment${a>1?"s":""} in force.</div>`:"")+
-  d.map(c=>`<div class="card"><textarea id="c${c.id}" class="sm">${esc(c.text)}</textarea>
-    <div class="mut" style="margin-bottom:12px">${esc(c.topic)}${c.source_excerpt?" · source: “"+esc(c.source_excerpt)+"”":" · no verified source excerpt"}</div>
-    <div class="row"><button onclick="approveC(${c.id})">Approve</button><button class="ghost" onclick="delC(${c.id})">Remove</button></div></div>`).join("")}
-async function approveC(id){await j("/api/commitments/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("c"+id).value})});
-  await j(`/api/commitments/${id}/approve`,{method:"POST"});loadDrafts()}
-async function delC(id){await j("/api/commitments/"+id,{method:"DELETE"});loadDrafts()}
+<!-- PRINCIPLES -->
+<section style="padding-top:40px"><div class="wrap">
+  <div class="eyebrow">Built the way it asks you to build</div>
+  <h2 class="wide">A tool that practices what it checks.</h2>
+  <div class="pr" style="margin-top:40px">
+    <div><h3>A human decides.</h3><p>Plumbline is an assistant to the pastor, never a replacement. Every flag ends with a person.</p></div>
+    <div><h3>It shows its evidence.</h3><p>Every flag names the claim, the verse or the commitment behind it, and a suggested fix.</p></div>
+    <div><h3>It says it is AI.</h3><p>Every verdict carries a visible note that an AI system produced it.</p></div>
+    <div><h3>It does not rule on theology.</h3><p>It only checks content against the church's own written standard.</p></div>
+    <div><h3>Synthetic data only.</h3><p>No real congregant information appears anywhere in the demo or the code.</p></div>
+    <div><h3>Honest about limits.</h3><p>Scripture is verified against the public-domain KJV; other translations would need licensed access. The demo build has no sign-in yet.</p></div>
+  </div>
+</div></section>
 
-$("extract").onclick=async()=>{$("extract").disabled=true;$("drafts").innerHTML=empty("Drafting…");
-  const r=await fetch(`/api/churches/${$("church").value}/statement`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("stmt").value})});
-  if(!r.ok){$("drafts").innerHTML=empty(esc((await r.json()).detail||"Failed"))}else loadDrafts();$("extract").disabled=false};
+<!-- CTA -->
+<section class="cta"><div class="wrap">
+  <h2>Check what AI wrote before your church reads it.</h2>
+  <a class="btn lg" href="/app">Open the app</a>
+</div></section>
 
-$("go").onclick=async()=>{$("go").disabled=true;$("out").innerHTML=empty("Checking…");
-  try{const v=await post("/api/check",{church_id:+$("church").value,text:$("text").value,ai_disclosed:$("disc").checked});
-  $("out").innerHTML=`<div class="card"><span class="badge ${v.status}">${label[v.status]}</span><div class="verdict-word">${label[v.status]}</div>
-    <ul class="reasons">${v.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
-    ${v.findings.map(f=>`<div class="finding"><b>${esc(f.label)}</b> · confidence ${f.confidence} — ${esc(f.evidence)}${f.suggested_fix?`<div class="fix">Suggested fix: ${esc(f.suggested_fix)}</div>`:""}</div>`).join("")}
-    <div class="disc">${esc(v.ai_disclosure)}</div></div>`;loadQueue()}
-  catch(e){$("out").innerHTML=empty("Something went wrong. Try again.")}
-  $("go").disabled=false};
+<footer><div class="wrap"><span>Plumbline · an AI assistant to the pastor, not a replacement.</span><span>Synthetic data only.</span></div></footer>
 
-$("church").onchange=refresh;
-loadChurches();
-</script>
 </body>
 </html>

@@ -116,6 +116,70 @@ def delete_ruling(id: int):
         db.audit(c, "pastor", "delete_ruling", f"ruling:{id}")
     return {"ok": True}
 
+def _detail(c, sid: int):
+    sub = c.execute("SELECT * FROM submission WHERE id=?", (sid,)).fetchone()
+    if not sub:
+        return None
+    v = c.execute("SELECT * FROM verdict WHERE submission_id=?", (sid,)).fetchone()
+    claims = db.rows(c.execute("SELECT * FROM claim WHERE submission_id=? ORDER BY id", (sid,)))
+    scripture = db.rows(c.execute("SELECT * FROM scripture_check WHERE submission_id=? ORDER BY id", (sid,)))
+    findings = db.rows(c.execute(
+        """SELECT f.*, cm.text AS commitment_text FROM finding f LEFT JOIN commitment cm ON cm.id=f.commitment_id
+           WHERE f.submission_id=? ORDER BY f.id""", (sid,)))
+    for cl in claims:
+        cl["scripture"] = [x for x in scripture if x["claim_id"] == cl["id"]]
+        cl["findings"] = [x for x in findings if x["claim_id"] == cl["id"]]
+    vd = dict(v) if v else {}
+    if vd.get("reasons"):
+        vd["reasons"] = json.loads(vd["reasons"])
+    return {"submission": dict(sub), "verdict": vd, "claims": claims,
+            "loose_scripture": [x for x in scripture if x["claim_id"] is None],
+            "loose_findings": [x for x in findings if x["claim_id"] is None],
+            "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."}
+
+@app.get("/api/submissions/{sid}")
+def submission_detail(sid: int):
+    with db.session() as c:
+        d = _detail(c, sid)
+    if not d:
+        raise HTTPException(404)
+    return d
+
+@app.get("/api/churches/{cid}/submissions")
+def submissions(cid: int, status: str = "", limit: int = 100):
+    q = """SELECT s.id, s.content_type, s.source_tool, substr(s.raw_text,1,160) AS preview, s.created_at,
+                  v.status, v.final_status, v.reviewer, v.decided_at
+           FROM submission s LEFT JOIN verdict v ON v.submission_id=s.id WHERE s.church_id=?"""
+    args = [cid]
+    if status:
+        q += " AND v.status=?"; args.append(status)
+    q += " ORDER BY s.id DESC LIMIT ?"; args.append(limit)
+    with db.session() as c:
+        return db.rows(c.execute(q, args))
+
+@app.get("/api/churches/{cid}/stats")
+def stats(cid: int):
+    with db.session() as c:
+        by = {r["status"]: r["n"] for r in c.execute(
+            """SELECT v.status, COUNT(*) n FROM submission s JOIN verdict v ON v.submission_id=s.id
+               WHERE s.church_id=? GROUP BY v.status""", (cid,))}
+        pending = c.execute(
+            """SELECT COUNT(*) FROM submission s JOIN verdict v ON v.submission_id=s.id
+               WHERE s.church_id=? AND v.status IN ('needs_review','blocked') AND v.final_status IS NULL""", (cid,)).fetchone()[0]
+        decided = c.execute(
+            """SELECT COUNT(*) FROM submission s JOIN verdict v ON v.submission_id=s.id
+               WHERE s.church_id=? AND v.final_status IS NOT NULL""", (cid,)).fetchone()[0]
+        com = {r["status"]: r["n"] for r in c.execute("SELECT status, COUNT(*) n FROM commitment WHERE church_id=? GROUP BY status", (cid,))}
+        rul = c.execute("SELECT COUNT(*) FROM ruling WHERE church_id=?", (cid,)).fetchone()[0]
+    return {"total": sum(by.values()), "approved": by.get("approved", 0), "needs_review": by.get("needs_review", 0),
+            "blocked": by.get("blocked", 0), "pending": pending, "decided": decided,
+            "commitments_approved": com.get("approved", 0), "commitments_draft": com.get("draft", 0), "rulings": rul}
+
+@app.get("/api/audit")
+def audit_log(limit: int = 60):
+    with db.session() as c:
+        return db.rows(c.execute("SELECT * FROM audit_log ORDER BY id DESC LIMIT ?", (limit,)))
+
 @app.get("/api/queue")
 def queue(church_id: int):
     with db.session() as c:
@@ -141,5 +205,11 @@ def decide(sid: int, b: DecideIn):
     return {"ok": True}
 
 _static = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+
+@app.get("/app", include_in_schema=False)
+def dashboard():
+    from fastapi.responses import FileResponse
+    return FileResponse(os.path.join(_static, "app.html"))
+
 if os.path.isdir(_static):
     app.mount("/", StaticFiles(directory=_static, html=True), name="ui")
