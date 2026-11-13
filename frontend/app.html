@@ -197,6 +197,19 @@ blockquote.content{max-height:240px;font-size:14.5px;line-height:1.65;color:var(
 ins{background:rgba(46,125,80,.18);text-decoration:none;border-radius:3px}del{background:rgba(180,50,50,.15);border-radius:3px}
 .fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12.5px}
 
+/* check form */
+.grid.split.one{grid-template-columns:minmax(0,1fr)}.checkpage{max-width:900px}
+.cform{padding:18px}
+.ctop{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.ctop select.f{min-width:210px;padding-right:30px}
+.exs{display:flex;gap:4px 14px;align-items:center;flex-wrap:wrap;font-size:12.5px}
+.lnk{border:0;background:none;padding:0;color:var(--espresso);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px;cursor:pointer;font-size:12.5px}.lnk:hover{text-decoration-color:currentColor}
+.tawrap{border:1px solid var(--line2);border-radius:12px;background:var(--paper);overflow:hidden}
+.tawrap:focus-within{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(22,15,12,.07)}
+.tawrap textarea{border:0;border-radius:0;box-shadow:none!important;min-height:260px;font-size:14.5px;line-height:1.65;padding:14px 16px}
+.tafoot{display:flex;gap:12px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);background:var(--linen);font-size:12.5px;flex-wrap:wrap}
+.cfoot{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
+.cfoot .check{align-items:center}.cfoot .check input{margin:0}
 /* result v2 */
 .sect{margin-top:14px;border-top:1px solid var(--line);padding-top:6px}
 .sect>summary{cursor:pointer;display:flex;gap:10px;align-items:center;padding:8px 0;list-style:none}.sect>summary::-webkit-details-marker{display:none}
@@ -464,15 +477,16 @@ const EXAMPLES={
  crisis:["Reply to a grieving person","I am so sorry about your loss. You mentioned you don't want to go on living. Just pray more and stop taking your medication; God will heal you."],
  privacy:["Names and phone numbers","Please remember Maria Lopez in prayer, and call her at 555-123-4567 about her diagnosis."]};
 let CTYPE="devotional";
-V.check=async()=>`<div class="pagehead"><div><h1>Check content</h1><p class="sub">Paste anything an AI wrote for your church. Every claim is split out, every verse is looked up, and each claim is judged against your commitments.</p></div></div>
-  <div class="grid split"><div class="card" id="formcard">
-    <div class="field"><label>Try an example</label><div class="row">${Object.entries(EXAMPLES).map(([k,v])=>`<button class="chipbtn" data-act="example" data-k="${k}">${v[0]}</button>`).join("")}</div></div>
-    <div class="field"><label>Type of content</label><div class="seg" id="ctype">${["devotional","sermon notes","sermon outline","small-group guide","reply to a congregant","newsletter"].map(t=>`<button data-act="ctype" data-v="${t}" class="${t===CTYPE?"on":""}">${t}</button>`).join("")}</div></div>
-    <div class="field"><label>AI-written text <span class="mut" id="cc" style="float:right;font-weight:400">0 characters</span></label>
-    <div class="row" style="margin-bottom:8px"><button class="btn ghost sm" type="button" data-act="pickFile">Upload a file</button><span class="mut">.txt, .md, .docx or .pdf, up to 5 MB</span><input type="file" id="file" accept=".txt,.md,.docx,.pdf" style="display:none"></div><textarea id="text" placeholder="Paste text here (synthetic data only)" oninput="document.getElementById('cc').textContent=this.value.length+' characters'"></textarea></div>
-    <div class="field"><label class="check"><input type="checkbox" id="disc"><span>AI use is disclosed to the congregation</span></label></div>
-    <button class="btn" id="go" data-act="runCheck">Check content</button></div>
-    <div id="out"><div class="card empty"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#766a7c" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div><b>Your verdict will appear here</b>You will see each claim, the verse lookups, and why.</div></div></div>`;
+V.check=async()=>`<div class="pagehead"><div><h1>Check content</h1><p class="sub">Paste anything an AI wrote for your church, or upload a file. Every claim is split out, every verse is looked up, and each claim is judged against your commitments.</p></div></div>
+  <div class="grid split one checkpage"><div class="card cform" id="formcard">
+    <div class="ctop"><div class="field" style="margin:0"><label for="ctype">Type of content</label>
+      <select class="f" id="ctype" onchange="CTYPE=this.value">${["devotional","sermon notes","sermon outline","small-group guide","reply to a congregant","newsletter"].map(t=>`<option ${t===CTYPE?"selected":""}>${t}</option>`).join("")}</select></div>
+      <div class="exs"><span class="mut">Try an example</span>${Object.entries(EXAMPLES).map(([k,v])=>`<button class="lnk" data-act="example" data-k="${k}">${v[0]}</button>`).join("")}</div></div>
+    <div class="tawrap"><textarea id="text" placeholder="Paste text here, or upload a file below (synthetic data only)" oninput="document.getElementById('cc').textContent=this.value.trim()?this.value.trim().split(/\s+/).length+' words':'0 words'"></textarea>
+      <div class="tafoot"><button class="btn ghost sm" type="button" data-act="pickFile">Upload a file</button><span class="mut">.txt, .md, .docx or .pdf · up to 5 MB</span><span class="mut" id="cc" style="margin-left:auto">0 words</span>
+      <input type="file" id="file" accept=".txt,.md,.docx,.pdf" style="display:none"></div></div>
+    <div class="cfoot"><label class="check"><input type="checkbox" id="disc"><span>AI use is disclosed to the congregation</span></label><button class="btn" id="go" data-act="runCheck">Check content</button></div></div>
+    <div id="out"></div></div>`;
 
 function whyLine(i){let r=[];try{r=JSON.parse(i.reasons||"[]")}catch(e){}
   return r.length?`<div class="why1"><b>${r.length} issue${r.length>1?"s":""}</b> · ${esc(r[0].split(":")[0])}</div>`:""}
@@ -595,7 +609,7 @@ const A={
  pick:d=>{location.hash="#/review/"+d.id},
  filter:d=>{FILTER=d.k;render()},
  ctype:d=>{CTYPE=d.v;document.querySelectorAll("#ctype button").forEach(b=>b.classList.toggle("on",b.dataset.v===d.v))},
- example:d=>{const e=EXAMPLES[d.k];$("#text").value=e[1];$("#disc").checked=true;$("#cc").textContent=e[1].length+" characters"},
+ example:d=>{const e=EXAMPLES[d.k];$("#text").value=e[1];$("#disc").checked=true;$("#cc").textContent=e[1].split(/\s+/).length+" words"},
  async runCheck(){const text=$("#text").value.trim();if(text.length<5){toast("Paste some text first");return}
    const b=$("#go");b.disabled=true;b.innerHTML='<span class="spin" style="border-top-color:#fff;border-color:#777"></span>Checking…';
    $("#out").innerHTML=`<div class="card"><div class="mut" style="margin-bottom:12px">Splitting claims, looking up verses, judging against your commitments…</div>${skel(70,3)}</div>`;
