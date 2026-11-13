@@ -1,8 +1,8 @@
-import json
-from fastapi import FastAPI, HTTPException
+import html, json
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from . import db, pipeline, commitments as commitments_mod, llm
+from . import bible, db, pipeline, commitments as commitments_mod, llm
 import os
 
 app = FastAPI(title="Plumbline")
@@ -133,7 +133,9 @@ def _detail(c, sid: int):
     if vd.get("reasons"):
         vd["reasons"] = json.loads(vd["reasons"])
     vd["flags"] = json.loads(vd["flags"]) if vd.get("flags") else []
+    secs = pipeline.split_sections(sub["raw_text"])
     return {"submission": dict(sub), "verdict": vd, "claims": claims,
+            "sections": [{"index": i, "preview": " ".join(t.split()[:14]), "words": len(t.split())} for i, t in enumerate(secs)] if len(secs) > 1 else [],
             "loose_scripture": [x for x in scripture if x["claim_id"] is None],
             "loose_findings": [x for x in findings if x["claim_id"] is None],
             "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."}
@@ -240,6 +242,113 @@ def decide(sid: int, b: DecideIn):
                       (row["church_id"], b.claim_pattern, b.decision, b.note))
         db.audit(c, b.reviewer, f"decide:{b.decision}", f"submission:{sid}")
     return {"ok": True}
+
+MAX_UPLOAD = 5_000_000
+
+def _docx_text(data: bytes) -> str:
+    import io, re, zipfile
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        xml = z.read("word/document.xml").decode("utf-8", "ignore")
+    xml = re.sub(r"</w:p>", "\n\n", xml)
+    xml = re.sub(r"<w:tab/>|<w:br/>", " ", xml)
+    return html.unescape(re.sub(r"<[^>]+>", "", xml))
+
+def _pdf_text(data: bytes) -> str:
+    import io
+    from pypdf import PdfReader
+    import unicodedata
+    raw = "\n\n".join((pg.extract_text() or "") for pg in PdfReader(io.BytesIO(data)).pages)
+    return unicodedata.normalize("NFKC", raw)   # PDFs store ligatures like "ﬁ" as single characters
+
+@app.post("/api/extract-text")
+async def extract_text(request: Request, filename: str = "upload.txt"):
+    """Read text out of an uploaded .txt, .md, .docx or .pdf (raw bytes in the body). Nothing is stored."""
+    data = await request.body()
+    if not data or len(data) > MAX_UPLOAD:
+        raise HTTPException(413 if data else 400, "File is empty or larger than 5 MB.")
+    ext = os.path.splitext(filename.lower())[1]
+    try:
+        if ext in (".txt", ".md", ".text"):
+            text = data.decode("utf-8", "replace")
+        elif ext == ".docx":
+            text = _docx_text(data)
+        elif ext == ".pdf":
+            text = _pdf_text(data)
+        else:
+            raise HTTPException(415, "Use a .txt, .md, .docx or .pdf file.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(422, f"Could not read that file ({type(e).__name__}). Is it a valid {ext} file?")
+    text = text.replace("\r\n", "\n").strip()
+    if len(text) < 5:
+        raise HTTPException(422, "No text found in that file. Scanned PDFs need OCR first.")
+    return {"text": text, "words": len(text.split()), "filename": filename}
+
+REWRITE_SYS = """You revise church-related text so that it fixes the listed problems and nothing else.
+Return ONLY JSON: {"revised_text": str}
+Rules: keep the author's voice, length and structure; change only the sentences named in the problems; remove or soften
+claims that conflict with the church's commitments; quote Scripture exactly or paraphrase it without quotation marks;
+never invent Bible references or add new doctrine; if a problem cannot be fixed by editing (crisis, abuse), return the text unchanged."""
+
+@app.post("/api/submissions/{sid}/rewrite")
+def rewrite(sid: int):
+    """Propose a corrected version of a flagged submission. It is only a draft: a pastor still decides."""
+    with db.session() as c:
+        d = _detail(c, sid)
+        if not d:
+            raise HTTPException(404)
+        coms = db.rows(c.execute("SELECT text FROM commitment WHERE church_id=? AND status='approved'", (d["submission"]["church_id"],)))
+    flags = [f for f in d["verdict"].get("flags", []) if f["kind"] != "model_unavailable"]
+    if not flags:
+        raise HTTPException(400, "Nothing to fix: this submission has no content flags.")
+    problems = "\n".join(f"- {f['title']}" + (f" (sentence: {f['claim']})" if f["claim"] else "") +
+                         (f": {f['detail']}" if f["detail"] else "") + (f" Fix: {f['fix']}" if f["fix"] else "") for f in flags)
+    user = "COMMITMENTS:\n" + "\n".join(f"- {x['text']}" for x in coms) + f"\n\nPROBLEMS:\n{problems}\n\nTEXT:\n{d['submission']['raw_text']}"
+    try:
+        out = llm.call_json(REWRITE_SYS, user, max_tokens=4000)
+    except llm.LLMUnavailable as e:
+        raise HTTPException(503, f"The model could not write a revision: {e}")
+    revised = (out.get("revised_text") or "").strip()
+    if not revised:
+        raise HTTPException(502, "The model returned no revision.")
+    # the draft must not introduce references that do not exist
+    bad = [r for r in bible.find_references(revised) if bible.check(r, None)["result"] == "not_found"]
+    with db.session() as c:
+        db.audit(c, "system", "suggest_rewrite", f"submission:{sid}")
+    return {"revised_text": revised, "unverified_references": bad}
+
+_LBL = {"approved": "Approved", "needs_review": "Needs pastor review", "blocked": "Blocked", "rejected": "Rejected", "edited": "Approved with edits"}
+
+@app.get("/api/submissions/{sid}/report", include_in_schema=False)
+def report(sid: int):
+    """A self-contained printable page (use the browser's Print > Save as PDF)."""
+    from fastapi.responses import HTMLResponse
+    with db.session() as c:
+        d = _detail(c, sid)
+        if not d:
+            raise HTTPException(404)
+        church = c.execute("SELECT name FROM church WHERE id=?", (d["submission"]["church_id"],)).fetchone()
+    e, v, sub = html.escape, d["verdict"], d["submission"]
+    flags = "".join(f"<li><b>{e(f['title'])}</b>" + (f"<blockquote>{e(f['claim'])}</blockquote>" if f["claim"] else "") +
+                    (f"<p>{e(f['detail'])}</p>" if f["detail"] else "") + (f"<p><i>What to do:</i> {e(f['fix'])}</p>" if f["fix"] else "") + "</li>"
+                    for f in v.get("flags", [])) or "<li>No issues found.</li>"
+    scr = "".join(f"<li><b>{e(x['reference'])}</b>: {e(x['result'].replace('_', ' '))}" + (f" ({e(x['translation'])})" if x.get("translation") else "") + "</li>"
+                  for x in [*d["loose_scripture"], *[s for cl in d["claims"] for s in cl["scripture"]]]) or "<li>No Scripture references.</li>"
+    final = (f"<p><b>Pastor decision:</b> {e(_LBL.get(v['final_status'], v['final_status']))} by {e(v.get('reviewer') or 'pastor')}, {e(v.get('decided_at') or '')}</p>"
+             if v.get("final_status") else "")
+    edited = f"<h2>Approved edited text</h2><blockquote>{e(v['edited_text'])}</blockquote>" if v.get("edited_text") else ""
+    page = f"""<!doctype html><meta charset="utf-8"><title>Plumbline report #{sid}</title>
+<style>body{{font:15px/1.55 Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;color:#222}}h1{{font-size:24px;margin:0}}h2{{font-size:17px;margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:4px}}
+blockquote{{margin:8px 0;padding:8px 14px;background:#f5f2ea;border-left:3px solid #b9a77a;white-space:pre-wrap}}.v{{font-size:20px;font-weight:bold}}.m{{color:#666;font-size:13px}}
+@media print{{button{{display:none}}}}</style>
+<button onclick="print()" style="float:right">Print / Save as PDF</button>
+<h1>Plumbline review report</h1><div class="m">{e(church['name'] if church else '')} · submission #{sid} · {e(sub['content_type'] or 'content')} · {e(sub['created_at'] or '')}</div>
+<h2>Verdict</h2><p class="v">{e(_LBL.get(v.get('status'), v.get('status') or ''))}</p>{final}
+<h2>Content checked</h2><blockquote>{e(sub['raw_text'])}</blockquote>
+<h2>Reasons</h2><ul>{flags}</ul><h2>Scripture checks</h2><ul>{scr}</ul>{edited}
+<p class="m" style="margin-top:32px">{e(d['ai_disclosure'])} Scripture checked against KJV, WEB, ASV and BSB.</p>"""
+    return HTMLResponse(page)
 
 _static = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
 

@@ -3,6 +3,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 from app import bible
 from app.verdict import decide
 
+def test_long_text_is_split_into_sections():
+    from app.pipeline import split_sections
+    para = "Grace is a gift from God to us. " * 70          # about 490 words
+    secs = split_sections("\n\n".join([para] * 5))
+    assert len(secs) > 1 and all(len(x.split()) <= 1000 for x in secs)
+    assert len(split_sections("grace - Eph 2:8 - not works")) == 1
+    assert len(split_sections("word. " * 3000)) > 1             # no blank lines: falls back to sentences
+
+def test_other_public_domain_translations():
+    web = "For God so loved the world, that he gave his only born Son, that whoever believes in him should not perish"
+    r = bible.check("John 3:16", web)
+    assert r["result"] == "exact" and r["translation"] in ("WEB", "BSB")
+    bsb = bible.check("John 3:16", "that everyone who believes in Him shall not perish but have eternal life")
+    assert bsb["result"] == "exact" and bsb["translation"] == "BSB"
+    assert bible.check("Song of Solomon 1:1", None)["result"] == "exact"   # book naming consistent across translations
+    assert bible.check("Acts 8:37", None)["result"] == "exact"             # verse only some translations carry
+
 def test_exact_and_missing_verse():
     assert bible.check("John 3:16", "For God so loved the world, that he gave his only begotten Son")["result"] == "exact"
     assert bible.check("Hezekiah 4:2", "x")["result"] == "not_found"
@@ -100,3 +117,19 @@ def test_parser_ignores_trailing_text_and_second_object():
     import pytest
     with pytest.raises(ValueError):
         _parse('[1, 2, 3]')
+
+
+def test_file_upload_text_extraction():
+    import io, zipfile
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    assert c.post("/api/extract-text?filename=a.txt", content=b"Grace alone saves.").json()["text"] == "Grace alone saves."
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("word/document.xml", "<w:document><w:p><w:r><w:t>First &amp; one.</w:t></w:r></w:p><w:p><w:r><w:t>Second para.</w:t></w:r></w:p></w:document>")
+    r = c.post("/api/extract-text?filename=a.docx", content=buf.getvalue()).json()
+    assert "First & one." in r["text"] and "Second para." in r["text"]
+    assert c.post("/api/extract-text?filename=a.exe", content=b"x").status_code == 415
+    assert c.post("/api/extract-text?filename=a.pdf", content=b"not a pdf").status_code == 422
+    assert c.post("/api/extract-text?filename=a.txt", content=b"").status_code == 400

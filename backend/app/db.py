@@ -41,7 +41,9 @@ def init():
         for stmt in ("ALTER TABLE verdict ADD COLUMN edited_text TEXT",
                      "ALTER TABLE scripture_check ADD COLUMN submission_id INT",
                      "ALTER TABLE finding ADD COLUMN submission_id INT",
-                     "ALTER TABLE verdict ADD COLUMN flags TEXT"):
+                     "ALTER TABLE verdict ADD COLUMN flags TEXT",
+                     "ALTER TABLE scripture_check ADD COLUMN translation TEXT",
+                     "ALTER TABLE claim ADD COLUMN section INT DEFAULT 0"):
             try:  # lightweight migrations for databases created by earlier versions
                 c.execute(stmt)
             except sqlite3.OperationalError:

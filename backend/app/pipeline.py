@@ -29,7 +29,40 @@ Rules: before choosing "silent", check EVERY commitment; if one states the same 
 and you must cite that commitment's id. If a PASTOR RULING covers the claim, follow it: an approved ruling means "aligned" (put "ruling" in evidence),
 a rejected ruling means "conflicts". Otherwise use "silent" only if the claim asserts a doctrinal position that no commitment addresses; generic comfort or
 exhortation that contradicts no commitment is "aligned" (cite the closest commitment id); if unsure, use "contested" with low confidence.
+Confidence guide: 0.9+ when a commitment states the same belief or the claim is generic comfort that contradicts nothing;
+0.7-0.85 when the match is partial or you had to interpret; below 0.6 when unsure. Do not give 0.7 to a claim that plainly matches.
 Never use "aligned" without citing a commitment id or a pastor ruling. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
+
+NOTES_HINT = """
+The text is sermon notes or an outline, so it may be fragments, bullets or shorthand ("grace - Eph 2:8-9 - not works").
+Read each fragment as the statement it implies, expand abbreviated references (Eph 2:8 = Ephesians 2:8), and extract it as a claim."""
+
+def extract_system(content_type: str) -> str:
+    ct = (content_type or "").lower()
+    return EXTRACT_SYS + (NOTES_HINT if "notes" in ct or "outline" in ct else "")
+
+SECTION_WORDS = 600      # long text is checked in sections so no single model answer gets cut off
+JUDGE_BATCH = 20         # claims judged per model call
+
+def split_sections(text: str, target: int = SECTION_WORDS) -> list[str]:
+    """Split on blank lines (then sentences/lines for very long blocks), packing pieces up to about `target` words."""
+    units = []
+    for para in re.split(r"\n\s*\n", text.strip()):
+        if not para.strip():
+            continue
+        if len(para.split()) <= target * 1.5:
+            units.append(para.strip())
+        else:
+            units += [u.strip() for u in re.split(r"(?<=[.!?])\s+|\n", para) if u.strip()]
+    out, cur, n = [], [], 0
+    for u in units:
+        w = len(u.split())
+        if cur and n + w > target:
+            out.append("\n\n".join(cur)); cur, n = [], 0
+        cur.append(u); n += w
+    if cur:
+        out.append("\n\n".join(cur))
+    return out or [text.strip()]
 
 PII_RES = {"phone number": r"\b(?:\+?\d{1,2}[\s.-])?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b",
            "email address": r"\b[\w.+-]+@[\w-]+\.[\w.]+\b"}
@@ -45,13 +78,28 @@ def run(submission_id: int) -> dict:
         rulings = db.rows(c.execute("SELECT * FROM ruling WHERE church_id=?", (church["id"],)))
     text = sub["raw_text"]
     llm_ok, claims, findings, scripture, pastor_auth, llm_error = True, [], [], [], False, ""
+    sections = split_sections(text)
+    seen_claims: set[str] = set()
     try:
-        ex = llm.call_json(EXTRACT_SYS, text)
-        claims = ex.get("claims", [])
-        pastor_auth = bool(ex.get("implies_pastor_authorship"))
+        for k, sec in enumerate(sections):
+            ex = llm.call_json(extract_system(sub["content_type"]), sec, max_tokens=6000)
+            pastor_auth = pastor_auth or bool(ex.get("implies_pastor_authorship"))
+            for cl in ex.get("claims", []):
+                key = " ".join(re.sub(r"[^a-z0-9 ]", "", (cl.get("text") or "").lower()).split())
+                if not key or key in seen_claims:      # the same sentence repeated in a long text is judged once
+                    continue
+                seen_claims.add(key)
+                cl["section"] = k
+                claims.append(cl)
         if claims and commitments:
-            numbered = "\n".join(f"{i}. [{cl['kind']}] {cl['text']}" for i, cl in enumerate(claims))
-            findings = llm.call_json(judge_system(church, commitments, rulings), numbered).get("findings", [])
+            sysmsg = judge_system(church, commitments, rulings)
+            for start in range(0, len(claims), JUDGE_BATCH):
+                batch = claims[start:start + JUDGE_BATCH]
+                numbered = "\n".join(f"{i}. [{cl['kind']}] {cl['text']}" for i, cl in enumerate(batch))
+                for f in llm.call_json(sysmsg, numbered, max_tokens=6000).get("findings", []):
+                    if isinstance(f.get("claim_index"), int) and 0 <= f["claim_index"] < len(batch):
+                        f["claim_index"] += start
+                        findings.append(f)
     except llm.LLMUnavailable as e:
         llm_ok, llm_error = False, str(e)
     # Deterministic Scripture check: LLM-extracted claims plus any reference found in the raw text.
@@ -76,6 +124,10 @@ def run(submission_id: int) -> dict:
                              "evidence": cl["text"], "suggested_fix": None})
     status, reasons, flags = decide_full(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth,
                                          {c["id"]: c["text"] for c in commitments}, llm_error)
+    sec_of = {cl["text"]: cl.get("section", 0) for cl in claims}
+    for f in flags:
+        if f.get("claim") in sec_of:
+            f["section"] = sec_of[f["claim"]]
     with db.session() as c:
         # a re-check replaces the previous run's results instead of piling on top of them
         old = "claim_id IN (SELECT id FROM claim WHERE submission_id=?)"
@@ -86,14 +138,14 @@ def run(submission_id: int) -> dict:
         c.execute("INSERT INTO verdict(submission_id,status,reasons,flags) VALUES(?,?,?,?)",
                   (submission_id, status, json.dumps(reasons), json.dumps(flags)))
         for i, cl in enumerate(claims):
-            cur = c.execute("INSERT INTO claim(submission_id,text,kind,risk) VALUES(?,?,?,?)",
-                            (submission_id, cl["text"], cl["kind"], cl.get("risk", "none")))
+            cur = c.execute("INSERT INTO claim(submission_id,text,kind,risk,section) VALUES(?,?,?,?,?)",
+                            (submission_id, cl["text"], cl["kind"], cl.get("risk", "none"), cl.get("section", 0)))
             cl["id"] = cur.lastrowid
         for s in scripture:
             cid = claims[s["claim_index"]]["id"] if s["claim_index"] is not None else None
             quoted = claims[s["claim_index"]].get("quoted_text") if s["claim_index"] is not None else None
-            c.execute("INSERT INTO scripture_check(submission_id,claim_id,reference,quoted_text,bible_text,result) VALUES(?,?,?,?,?,?)",
-                      (submission_id, cid, s["reference"], quoted, s["bible_text"], s["result"]))
+            c.execute("INSERT INTO scripture_check(submission_id,claim_id,reference,quoted_text,bible_text,result,translation) VALUES(?,?,?,?,?,?,?)",
+                      (submission_id, cid, s["reference"], quoted, s["bible_text"], s["result"], s.get("translation")))
         for f in findings:
             idx = f.get("claim_index")
             cid = claims[idx]["id"] if isinstance(idx, int) and 0 <= idx < len(claims) else None
@@ -101,5 +153,5 @@ def run(submission_id: int) -> dict:
                       (submission_id, cid, f.get("commitment_id"), f["label"], f.get("confidence", 0), f.get("evidence"), f.get("suggested_fix")))
         db.audit(c, "system", "verdict:" + status, f"submission:{submission_id}")
     return {"submission_id": submission_id, "status": status, "reasons": reasons, "flags": flags,
-            "claims": claims, "scripture": scripture, "findings": findings,
+            "sections": len(sections), "claims": claims, "scripture": scripture, "findings": findings,
             "ai_disclosure": "This verdict was produced by an AI system. A pastor makes the final decision."}

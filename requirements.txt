@@ -4,3 +4,4 @@ anthropic
 pydantic
 httpx
 pytest
+pypdf
