@@ -65,11 +65,11 @@ def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_p
         if s["result"] == "not_found":
             flags.append(_flag("scripture", "review", "Scripture reference not found", claim,
                 f"{s['reference']} does not exist in the Bible text we check against. It may be invented or mistyped.",
-                "Bible text (KJV)", "Check the reference, or remove the quotation."))
+                "Bible text (KJV, WEB, ASV, BSB)", "Check the reference, or remove the quotation."))
         elif s["result"] == "misquote":
             flags.append(_flag("scripture", "review", "Quote does not match the verse", claim,
                 f"The quoted words do not match {s['reference']}, which reads: “{s.get('bible_text') or ''}”",
-                "Bible text (KJV)", "Quote the verse accurately, or paraphrase it."))
+                "Bible text (KJV, WEB, ASV, BSB)", "Quote the verse accurately, or paraphrase it."))
     for f in findings:
         claim, label = ctext(f.get("claim_index")), f["label"]
         com = commitments.get(f.get("commitment_id"))

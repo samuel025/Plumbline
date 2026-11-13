@@ -1,8 +1,9 @@
-"""Scripture verification against a bundled public-domain text (KJV)."""
+"""Scripture verification against bundled public-domain translations (KJV, WEB, ASV, BSB). A quote matches if it fits any of them."""
 import difflib, json, os, re
 
-_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "kjv.json")
-_VERSES: dict[str, str] = {}
+_DATA = os.path.join(os.path.dirname(__file__), "..", "..", "data")
+TRANSLATIONS = {"KJV": "kjv.json", "WEB": "web.json", "ASV": "asv.json", "BSB": "bsb.json"}  # all public domain
+_TEXTS: dict[str, dict[str, str]] = {}
 
 BOOKS = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1 Samuel","2 Samuel",
  "1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs",
@@ -13,14 +14,11 @@ BOOKS = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges
  "2 Peter","1 John","2 John","3 John","Jude","Revelation"]
 ALIASES = {"psalm": "Psalms", "song of songs": "Song of Solomon", "revelations": "Revelation"}
 
-def verses() -> dict[str, str]:
-    global _VERSES
-    if not _VERSES:
-        with open(_PATH) as f:
-            raw = json.load(f)
-        # source file names two-word books as "1" / "2"; rebuild from BOOKS order when needed
-        _VERSES = raw
-    return _VERSES
+def verses(tr: str = "KJV") -> dict[str, str]:
+    if tr not in _TEXTS:
+        path = os.path.join(_DATA, TRANSLATIONS[tr])
+        _TEXTS[tr] = json.load(open(path)) if os.path.exists(path) else {}
+    return _TEXTS[tr]
 
 def _alt():
     names = BOOKS + list(ALIASES)
@@ -60,7 +58,7 @@ def find_references(text: str) -> list[str]:
             out.append(e)
     return out
 
-def lookup(reference: str) -> str | None:
+def lookup(reference: str, tr: str = "KJV") -> str | None:
     m = REF_RE.search(reference)
     if not m:
         return None
@@ -68,7 +66,7 @@ def lookup(reference: str) -> str | None:
     v2 = int(m.group(4)) if m.group(4) else v1
     parts = []
     for v in range(v1, v2 + 1):
-        t = verses().get(f"{book} {ch}:{v}")
+        t = verses(tr).get(f"{book} {ch}:{v}")
         if t is None:
             return None
         parts.append(t)
@@ -77,19 +75,22 @@ def lookup(reference: str) -> str | None:
 def _norm(s: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]", "", s.lower().replace("—", " ")).split())
 
-def check(reference: str, quoted: str | None) -> dict:
-    """result: exact | paraphrase | misquote | not_found"""
-    found = lookup(reference)
-    if found is None:
-        return {"reference": reference, "bible_text": None, "result": "not_found"}
-    if not quoted or not quoted.strip():
-        return {"reference": reference, "bible_text": found, "result": "exact"}  # reference exists, nothing quoted
+def _grade(quoted: str, found: str) -> tuple[str, float]:
     a, b = _norm(quoted), _norm(found)
     ratio = difflib.SequenceMatcher(None, a, b).ratio()
     if a in b or ratio >= 0.95:
-        res = "exact"
-    elif ratio >= 0.55:
-        res = "paraphrase"
-    else:
-        res = "misquote"
-    return {"reference": reference, "bible_text": found, "result": res, "similarity": round(ratio, 2)}
+        return "exact", ratio
+    return ("paraphrase" if ratio >= 0.55 else "misquote"), ratio
+
+def check(reference: str, quoted: str | None) -> dict:
+    """result: exact | paraphrase | misquote | not_found. The quote is compared with every bundled translation
+    and graded by the best match, so a correct ESV-style quote of a verse is not called a misquote just because it isn't KJV."""
+    found = {tr: t for tr in TRANSLATIONS if (t := lookup(reference, tr)) is not None}
+    if not found:
+        return {"reference": reference, "bible_text": None, "result": "not_found", "translation": None}
+    if not quoted or not quoted.strip():
+        tr = "KJV" if "KJV" in found else next(iter(found))
+        return {"reference": reference, "bible_text": found[tr], "result": "exact", "translation": tr}  # exists, nothing quoted
+    best = max(found, key=lambda tr: _grade(quoted, found[tr])[1])
+    res, ratio = _grade(quoted, found[best])
+    return {"reference": reference, "bible_text": found[best], "result": res, "similarity": round(ratio, 2), "translation": best}

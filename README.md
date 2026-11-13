@@ -1,7 +1,7 @@
 # Plumbline
 
 Review layer for church AI: checks AI-written text against a church's own statement of faith and against Scripture
-(bundled public-domain KJV), then returns Approved / Needs pastor review / Blocked with evidence.
+(bundled public-domain KJV, WEB, ASV and BSB), then returns Approved / Needs pastor review / Blocked with evidence.
 Design rule: uncertainty never approves. All data is synthetic.
 
     python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
