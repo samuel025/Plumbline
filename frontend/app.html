@@ -194,8 +194,36 @@ tr.click{cursor:pointer}tr.click:hover td{background:var(--linen)}
 blockquote{margin:0;padding:12px 16px;background:var(--linen);border-radius:10px;color:var(--graphite);font-size:13.5px;max-height:150px;overflow:auto;white-space:pre-wrap}
 blockquote.content{max-height:240px;font-size:14.5px;line-height:1.65;color:var(--ink);background:var(--paper);box-shadow:var(--ring)}
 .decide{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+ins{background:rgba(46,125,80,.18);text-decoration:none;border-radius:3px}del{background:rgba(180,50,50,.15);border-radius:3px}
 .fix{background:var(--linen);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12.5px}
 
+/* result v2 */
+.sect{margin-top:14px;border-top:1px solid var(--line);padding-top:6px}
+.sect>summary{cursor:pointer;display:flex;gap:10px;align-items:center;padding:8px 0;list-style:none}.sect>summary::-webkit-details-marker{display:none}
+.sect>summary::before{content:"▸";color:var(--stone);font-size:12px}.sect[open]>summary::before{content:"▾"}
+.sect .sn{font-weight:500;font-size:13.5px;white-space:nowrap}.sect .sp{flex:1;color:var(--ash);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reviewing{border:1px solid var(--line2);border-radius:14px;padding:14px 18px;margin-bottom:14px;background:var(--paper)}
+.reviewing .rl{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.reviewing .rt{font-size:15.5px;line-height:1.7;white-space:pre-wrap;max-height:240px;overflow:auto}
+.reviewing mark{background:rgba(214,160,40,.3);border-radius:3px;padding:0 2px}
+.vcount{margin-top:10px;font-size:13.5px;color:var(--graphite)}
+h3.sec{font-size:13px;font-weight:500;letter-spacing:.02em;margin:22px 0 4px;color:var(--graphite)}
+.claim2{border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:12px;padding:14px 16px;margin-top:10px;background:var(--paper)}
+.claim2.att{border-left-color:var(--warn)}.claim2.blk{border-left-color:var(--bad)}
+.claim2 .ch{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.claim2 .q{font-size:15px;margin:0;line-height:1.45}
+.issue{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.claim2>.issue:first-child{border-top:0;margin-top:0;padding-top:0}
+.issue .ih{display:flex;gap:8px;align-items:center;margin-bottom:4px}.issue .ih b{font-weight:500;font-size:14px;color:#7a5410}
+.issue.block .ih b{color:var(--bad)}
+.issue p{margin:0;font-size:13.5px;color:var(--graphite)}.issue .src{margin-top:6px;font-size:12.5px;color:var(--ash)}.issue .src::before{content:"Based on: ";color:var(--stone)}
+.okline{display:flex;gap:9px;margin-top:10px;font-size:13px;color:var(--graphite)}.okline .tick{color:var(--ok);font-weight:700}
+.orig{margin-top:18px}.orig summary{cursor:pointer;font-size:13px;color:var(--ash)}.orig blockquote{margin-top:8px}
+.grid.split.done{grid-template-columns:1fr}.grid.split.done #formcard{display:none}
+.opt{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px}.opt summary{cursor:pointer;font-size:13.5px}.opt[open] summary{margin-bottom:10px}
+.dbar{position:sticky;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px -16px -16px;padding:14px 16px;background:var(--paper);border-top:1px solid var(--line);border-radius:0 0 14px 14px;box-shadow:0 -8px 16px -12px rgba(0,0,0,.18)}
+.qlist{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}.why1{margin-top:6px;font-size:12px;color:var(--ash)}.why1 b{font-weight:500;color:#7a5410}
+.decide{border-top:1px solid var(--line);margin-top:22px;padding-top:18px}
 /* flags: why something was flagged */
 .why{margin:2px 0 20px}
 .flag{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px;margin-top:10px;background:var(--paper)}
@@ -337,44 +365,63 @@ document.addEventListener("mousemove",e=>{const g=e.target.closest("[data-tip]")
   t.textContent=g.dataset.tip;t.style.opacity=1;t.style.left=Math.min(e.clientX+14,innerWidth-t.offsetWidth-10)+"px";t.style.top=(e.clientY+16)+"px"});
 
 /* ---------- shared renderers ---------- */
-function resultHTML(d,{withDecision=false}={}){
-  const v=d.verdict||{},s=d.submission,st=v.status||"needs_review";
+function resultHTML(d,{withDecision=false,onCheck=false}={}){
+  const v=d.verdict||{},s=d.submission,st=v.status||"needs_review",flags=v.flags||[];
   const summary={approved:"Every claim lines up with your commitments and every verse checks out.",needs_review:"A person should look at this before it is used.",blocked:"Do not publish or send this. Route it to a pastor."}[st];
-  const all=d.claims,verses=[...all.flatMap(c=>c.scripture),...d.loose_scripture],okV=verses.filter(x=>x.result==="exact"||x.result==="paraphrase").length;
-  const conflicts=all.flatMap(c=>c.findings).filter(f=>f.label==="conflicts"||f.label==="contested").length+d.loose_findings.length*0;
-  const risks=all.filter(c=>c.risk&&c.risk!=="none").length;
-  const final=v.final_status?`<div class="row" style="margin-top:10px">${badge(v.final_status,"Pastor: "+LBL[v.final_status])}<span class="mut">${esc(v.reviewer||"pastor")} · ${ago(v.decided_at)}</span></div>`:"";
-  const claimHTML=all.map(cl=>`<div class="claim"><p class="q">“${esc(cl.text)}”</p>
-    <div class="row"><span class="chip">${KIND[cl.kind]||esc(cl.kind)}</span>${cl.risk&&cl.risk!=="none"?`<span class="chip bad">${RISK[cl.risk]||esc(cl.risk)}</span>`:""}</div>
-    ${cl.scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="check-line"><span class="chip ${c}">${t}</span> <b>${esc(x.reference)}</b>${x.bible_text?`<div class="verse">KJV: ${esc(x.bible_text)}</div>`:""}</div>`}).join("")}
-    ${cl.findings.map(f=>{const[c,t]=FIND[f.label]||["",f.label];return`<div class="check-line"><span class="chip ${c}">${t}</span> <span class="mut">confidence ${Number(f.confidence||0).toFixed(2)}</span>
-      <div style="margin-top:4px">${esc(f.evidence||"")}</div>${f.commitment_text?`<div class="verse">Commitment: ${esc(f.commitment_text)}</div>`:""}
-      ${f.suggested_fix?`<div class="fix"><b>Suggested fix:</b> ${esc(f.suggested_fix)}</div>`:""}</div>`}).join("")}</div>`).join("");
-  const loose=d.loose_scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="claim"><span class="chip ${c}">${t}</span> <b>${esc(x.reference)}</b>${x.bible_text?`<div class="verse">KJV: ${esc(x.bible_text)}</div>`:""}</div>`}).join("");
-  const flags=v.flags||[];
-  const flagHTML=f=>`<div class="flag ${f.severity}"><div class="fh"><span class="sev">${f.severity==="block"?"Blocked":"Needs a person"}</span><b>${esc(f.title)}</b></div>
-    ${f.claim?`<blockquote class="fq">“${esc(f.claim)}”</blockquote>`:""}${f.detail?`<p>${esc(f.detail)}</p>`:""}${f.source?`<div class="src">${esc(f.source)}</div>`:""}
+  const byClaim=cl=>flags.filter(f=>f.claim&&f.claim===cl.text);
+  const claimed=new Set(d.claims.flatMap(byClaim));
+  const general=flags.filter(f=>!claimed.has(f));            // privacy, authorship, model down, no claims, unmatched
+  const issueHTML=f=>`<div class="issue ${f.severity}"><div class="ih"><b>${esc(f.title)}</b>${f.severity==="block"?`<span class="sev">Blocked</span>`:""}</div>
+    ${f.detail?`<p>${esc(f.detail)}</p>`:""}${f.source?`<div class="src">${esc(f.source)}</div>`:""}
     ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
     ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div>`;
-  const whyHTML=flags.length?`<div class="why"><h3>Why this was flagged <span class="mut">· ${flags.length} reason${flags.length>1?"s":""}</span></h3>${flags.map(flagHTML).join("")}</div>`:"";
-  return `<h3>Content</h3><blockquote class="content">${esc(s.raw_text)}</blockquote>
-    <div class="verdict ${st}" style="margin-top:16px"><div class="vhead"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
-    <button class="btn ghost sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}" title="Run every check again on this same text">Check again</button></div>
-    <div class="w">${LBL[st]}</div><div style="font-size:14px">${summary}</div>
-    ${flags.length?"":`<ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`}${final}</div>
-    ${whyHTML}
-    <div class="miniKpis"><div><b>${all.length}</b><span>claims</span></div><div><b>${okV}/${verses.length}</b><span>verses verified</span></div><div><b style="color:${conflicts?"var(--bad)":"inherit"}">${conflicts}</b><span>conflicts</span></div><div><b style="color:${risks?"var(--bad)":"inherit"}">${risks}</b><span>risks</span></div></div>
-    <h3 style="margin-top:20px">What we checked</h3>
-    ${claimHTML||`<div class="mut">No separate claims were extracted.</div>`}${loose?`<h3 style="margin-top:20px">Other references found in the text</h3>${loose}`:""}
-    <div class="mut" style="margin-top:18px">${esc(d.ai_disclosure)}</div>
-    ${withDecision&&!v.final_status&&st!=="approved"?decisionHTML(s):""}`}
-function decisionHTML(s){return`<div class="decide"><h2 style="margin-bottom:14px">Your decision</h2>
-  <div class="field"><label>Edit the text (optional)</label><textarea class="sm" id="ed-${s.id}">${esc(s.raw_text)}</textarea></div>
-  <div class="field"><label>Save as a ruling (optional)</label><input id="rp-${s.id}" placeholder="The kind of claim this covers, e.g. “Moderate drinking of alcohol”"></div>
-  <div class="field"><label>Note for future reviewers</label><input id="rn-${s.id}" placeholder="Why you decided this"></div>
-  <div class="row"><button class="btn" data-act="decide" data-id="${s.id}" data-d="approved">Approve</button>
-  <button class="btn ghost" data-act="decide" data-id="${s.id}" data-d="edited">Approve with my edits</button>
-  <button class="btn danger" data-act="decide" data-id="${s.id}" data-d="rejected">Reject</button></div></div>`}
+  const okLines=cl=>[
+    ...cl.scripture.filter(x=>x.result==="exact"||x.result==="paraphrase").map(x=>`<div class="okline"><span class="tick">✓</span><div><b>${esc(x.reference)}</b> ${x.result==="paraphrase"?"is a faithful paraphrase":"checks out"}${x.translation?` <span class="mut">(${esc(x.translation)})</span>`:""}${x.bible_text?`<div class="verse">${esc(x.bible_text)}</div>`:""}</div></div>`),
+    ...(cl.kind==="scriptural"||cl.kind==="factual"?[]:cl.findings.filter(f=>f.label==="aligned"&&(f.confidence||0)>=0.75)).map(f=>`<div class="okline"><span class="tick">✓</span><div>Matches your statement of faith${f.commitment_text?`<div class="verse">“${esc(f.commitment_text)}”</div>`:""}</div></div>`)];
+  const cards=d.claims.map(cl=>{const fl=byClaim(cl),ok=okLines(cl),bad=fl.length>0;
+    return {bad,sec:cl.section||0,html:`<div class="claim2 ${bad?(fl.some(f=>f.severity==="block")?"blk":"att"):"fine"}"><div class="ch"><p class="q">“${esc(cl.text)}”</p><span class="chip">${KIND[cl.kind]||esc(cl.kind)}</span></div>
+      ${fl.map(issueHTML).join("")}${ok.join("")}</div>`}});
+  const loose=d.loose_scripture.map(x=>{const[c,t]=SCR[x.result]||["","?"];return`<div class="okline"><span class="chip ${c}">${t}</span><div><b>${esc(x.reference)}</b>${x.translation?` <span class="mut">(${esc(x.translation)})</span>`:""}</div></div>`}).join("");
+  let shown=esc(s.raw_text);                       // underline the sentences that were flagged, when they appear verbatim
+  d.claims.filter(cl=>byClaim(cl).length).forEach(cl=>{const t=esc(cl.text);if(t&&shown.includes(t)&&!shown.includes("<mark>"+t))shown=shown.replace(t,`<mark>${t}</mark>`)});
+  const contentBox=`<div class="reviewing"><div class="rl">What is being reviewed${flags.length&&shown.includes("<mark>")?` <span class="mut">· flagged sentences highlighted</span>`:""}</div><div class="rt">${shown}</div></div>`;
+  const secs=d.sections||[];
+  const nBad=cards.filter(c=>c.bad).length,nFine=cards.length-nBad;
+  const count=cards.length?`${nBad?`<b>${nBad}</b> of ${cards.length} claim${cards.length>1?"s":""} need${nBad>1?"":"s"} attention`:`All ${cards.length} claim${cards.length>1?"s":""} are fine`}${secs.length>1?` · ${secs.length} sections`:""}${general.length?` · ${general.length} general issue${general.length>1?"s":""}`:""}`:"";
+  const final=v.final_status?`<div class="row" style="margin-top:12px">${badge(v.final_status,"Pastor: "+LBL[v.final_status])}<span class="mut">${esc(v.reviewer||"pastor")} · ${ago(v.decided_at)}</span></div>`:"";
+  const canCopy=st==="approved"||v.final_status==="approved"||v.final_status==="edited";
+  return `${withDecision||onCheck?contentBox:""}<div class="verdict ${st}"><div class="vhead"><div class="row">${badge(st)}<span class="mut">#${s.id} · ${esc(s.content_type||"content")} · ${ago(s.created_at)}</span></div>
+      <div class="row" style="gap:6px">${onCheck?`<button class="btn ghost sm" data-act="newCheck">Edit text</button>`:""}<button class="btn ghost sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}" title="Run every check again on this same text">Check again</button>
+      <a class="btn ghost sm" href="/api/submissions/${s.id}/report" target="_blank" rel="noopener">Print report</a>
+      ${canCopy?`<button class="btn ghost sm" data-act="copyText" data-id="${s.id}" data-t="${esc(v.final_status==="edited"&&v.edited_text?v.edited_text:s.raw_text)}">Copy text</button>`:""}</div></div>
+    <div class="w">${LBL[st]}</div><div style="font-size:14px">${summary}</div>${count?`<div class="vcount">${count}</div>`:""}
+    ${flags.length||cards.length?"":`<ul class="reasons">${(v.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`}${final}</div>
+    ${general.length?`<h3 class="sec">General issues</h3>${general.map(f=>`<div class="claim2 att">${issueHTML(f)}</div>`).join("")}`:""}
+    ${cards.length?(secs.length>1?secs.map(sc=>{const cs=cards.filter(c=>c.sec===sc.index),nb=cs.filter(c=>c.bad).length;
+      return `<details class="sect" ${nb?"open":""}><summary><span class="sn">Section ${sc.index+1} of ${secs.length}</span><span class="sp">“${esc(sc.preview)}…”</span>
+        <span class="chip ${nb?"warn":"ok"}">${cs.length?(nb?nb+" need"+(nb>1?"":"s")+" attention":"all fine"):"no claims"}</span></summary>
+        ${cs.length?[...cs.filter(c=>c.bad),...cs.filter(c=>!c.bad)].map(c=>c.html).join(""):`<div class="mut" style="padding:10px 2px">Nothing in this section needed checking.</div>`}</details>`}).join(""):
+      `<h3 class="sec">Claim by claim <span class="mut">· issues first</span></h3>${[...cards.filter(c=>c.bad),...cards.filter(c=>!c.bad)].map(c=>c.html).join("")}`):""}
+    ${loose?`<h3 class="sec">Other Scripture references</h3><div class="claim2 fine">${loose}</div>`:""}
+    ${withDecision||onCheck?"":`<details class="orig"><summary>Original text</summary><blockquote class="content">${esc(s.raw_text)}</blockquote></details>`}
+    <div class="mut" style="margin-top:14px">${esc(d.ai_disclosure)}</div>
+    ${withDecision&&!v.final_status&&st!=="approved"?decisionHTML(s,flags):""}`}
+function wordDiff(a,b){const x=a.split(/\s+/).filter(Boolean),y=b.split(/\s+/).filter(Boolean),n=x.length,m=y.length;
+  const L=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=x[i]===y[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  let i=0,j=0,o="";while(i<n&&j<m){if(x[i]===y[j]){o+=esc(x[i])+" ";i++;j++}else if(L[i+1][j]>=L[i][j+1]){o+=`<del>${esc(x[i])}</del> `;i++}else{o+=`<ins>${esc(y[j])}</ins> `;j++}}
+  while(i<n)o+=`<del>${esc(x[i++])}</del> `;while(j<m)o+=`<ins>${esc(y[j++])}</ins> `;return o}
+function decisionHTML(s,flags=[]){const first=(flags.find(f=>f.claim)||{}).claim||"";return`<div class="decide"><h3 class="sec" style="margin-top:0">Before you decide <span class="mut">· optional</span></h3>
+  <details class="opt"><summary>Edit the text</summary>
+    <textarea class="sm" id="ed-${s.id}">${esc(s.raw_text)}</textarea>
+    <div class="row" style="margin-top:8px"><button class="btn ghost sm" data-act="rewrite" data-id="${s.id}">Suggest a rewrite</button><span class="mut">The model drafts a fix; you review the changes first. If you change the text, Approve will record it as approved with your edits.</span></div>
+    <div id="df-${s.id}"></div></details>
+  <details class="opt"><summary>Remember this decision for similar claims</summary>
+    <div class="field" style="margin-top:10px"><label>Claims like this one</label><input id="rp-${s.id}" value="${esc(first.slice(0,160))}" placeholder="e.g. “Moderate drinking of alcohol”"></div>
+    <div class="field"><label>Why you decided this</label><input id="rn-${s.id}" placeholder="Shown to future reviewers"></div>
+    <label class="row" style="gap:8px"><input type="checkbox" id="rs-${s.id}" style="width:auto"> Save as a ruling when I decide</label></details>
+  </div>
+  <div class="dbar"><span class="mut">Your decision</span><div class="row"><button class="btn danger" data-act="decide" data-id="${s.id}" data-d="rejected">Reject</button><button class="btn" data-act="decide" data-id="${s.id}" data-d="approved">Approve</button></div></div>`}
 
 /* ---------- views ---------- */
 const V={};
@@ -418,22 +465,25 @@ const EXAMPLES={
  privacy:["Names and phone numbers","Please remember Maria Lopez in prayer, and call her at 555-123-4567 about her diagnosis."]};
 let CTYPE="devotional";
 V.check=async()=>`<div class="pagehead"><div><h1>Check content</h1><p class="sub">Paste anything an AI wrote for your church. Every claim is split out, every verse is looked up, and each claim is judged against your commitments.</p></div></div>
-  <div class="grid split"><div class="card">
+  <div class="grid split"><div class="card" id="formcard">
     <div class="field"><label>Try an example</label><div class="row">${Object.entries(EXAMPLES).map(([k,v])=>`<button class="chipbtn" data-act="example" data-k="${k}">${v[0]}</button>`).join("")}</div></div>
-    <div class="field"><label>Type of content</label><div class="seg" id="ctype">${["devotional","sermon outline","small-group guide","reply to a congregant","newsletter"].map(t=>`<button data-act="ctype" data-v="${t}" class="${t===CTYPE?"on":""}">${t}</button>`).join("")}</div></div>
-    <div class="field"><label>AI-written text <span class="mut" id="cc" style="float:right;font-weight:400">0 characters</span></label><textarea id="text" placeholder="Paste text here (synthetic data only)" oninput="document.getElementById('cc').textContent=this.value.length+' characters'"></textarea></div>
+    <div class="field"><label>Type of content</label><div class="seg" id="ctype">${["devotional","sermon notes","sermon outline","small-group guide","reply to a congregant","newsletter"].map(t=>`<button data-act="ctype" data-v="${t}" class="${t===CTYPE?"on":""}">${t}</button>`).join("")}</div></div>
+    <div class="field"><label>AI-written text <span class="mut" id="cc" style="float:right;font-weight:400">0 characters</span></label>
+    <div class="row" style="margin-bottom:8px"><button class="btn ghost sm" type="button" data-act="pickFile">Upload a file</button><span class="mut">.txt, .md, .docx or .pdf, up to 5 MB</span><input type="file" id="file" accept=".txt,.md,.docx,.pdf" style="display:none"></div><textarea id="text" placeholder="Paste text here (synthetic data only)" oninput="document.getElementById('cc').textContent=this.value.length+' characters'"></textarea></div>
     <div class="field"><label class="check"><input type="checkbox" id="disc"><span>AI use is disclosed to the congregation</span></label></div>
     <button class="btn" id="go" data-act="runCheck">Check content</button></div>
     <div id="out"><div class="card empty"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#766a7c" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div><b>Your verdict will appear here</b>You will see each claim, the verse lookups, and why.</div></div></div>`;
 
+function whyLine(i){let r=[];try{r=JSON.parse(i.reasons||"[]")}catch(e){}
+  return r.length?`<div class="why1"><b>${r.length} issue${r.length>1?"s":""}</b> · ${esc(r[0].split(":")[0])}</div>`:""}
 V.review=async()=>{
   const q=await api(`/api/queue?church_id=${cid()}`);
   const sel=+(location.hash.split("/")[2]||(q[0]&&q[0].id)||0);
-  const list=q.map(i=>`<button class="item ${i.id===sel?"on":""}" data-act="pick" data-id="${i.id}"><div class="spread">${badge(i.status)}<span class="mut">#${i.id}</span></div><div class="t">${esc(i.preview)}</div></button>`).join("");
+  const list=q.map(i=>`<button class="item ${i.id===sel?"on":""}" data-act="pick" data-id="${i.id}"><div class="spread">${badge(i.status)}<span class="mut">#${i.id}</span></div><div class="t">${esc(i.preview)}</div>${whyLine(i)}</button>`).join("");
   let detail=emptyBox("Queue is clear","Anything uncertain or risky lands here for a pastor.");
   if(q.length&&sel){const d=await api("/api/submissions/"+sel);detail=resultHTML(d,{withDecision:true})}
   return `<div class="pagehead"><div><h1>Review queue</h1><p class="sub">Content Plumbline would not approve on its own. Uncertainty always comes to a person.</p></div><span class="mut">${q.length} waiting</span></div>
-   ${q.length?`<div class="grid mdl"><div class="card" style="padding:8px">${list}</div><div class="card">${detail}</div></div>`:`<div class="card">${detail}</div>`}`};
+   ${q.length?`<div class="grid mdl"><div class="card qlist" style="padding:8px">${list}</div><div class="card">${detail}</div></div>`:`<div class="card">${detail}</div>`}`};
 
 V.standard=async()=>{
   const cs=await api(`/api/churches/${cid()}/commitments`);
@@ -499,7 +549,7 @@ V.dev=async()=>{const base=location.origin;
     <li><code>GET /api/health</code><div class="mut">Whether the judging model is reachable</div></li></ul></div>
   <div class="card"><div class="cardhead"><h2>Good to know</h2></div><ul class="list"><li><b>Approved</b> is never the default: doubt always returns <code>needs_review</code>.</li>
     <li>This demo build has no API keys or rate limits. Add authentication before real use.</li>
-    <li>Scripture is verified against the public-domain KJV. Other translations would need licensed access.</li></ul></div></div>`};
+    <li>Scripture is verified against four public-domain translations (KJV, WEB, ASV, BSB); a quote that matches any of them passes. NIV, ESV and similar need licensed access.</li></ul></div></div>`};
 
 /* ---------- router ---------- */
 let seq=0;
@@ -535,7 +585,8 @@ document.addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();palGo(palSel)}}});
 
 async function showCheck(id){const d=await api("/api/submissions/"+id);
-  $("#out").innerHTML=`<div class="card">${resultHTML(d)}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${id}">Open in review queue</a></div>`:""}</div>`}
+  $("#out").innerHTML=`<div class="card">${resultHTML(d,{onCheck:true})}${d.verdict.status!=="approved"?`<div class="decide row"><a class="btn" href="#/review/${id}">Decide in the review queue</a><span class="mut">A pastor approves, edits or rejects it there.</span></div>`:""}</div>`;
+  document.querySelector(".grid.split").classList.add("done");scrollTo({top:0,behavior:"smooth"})}
 
 /* ---------- actions ---------- */
 const A={
@@ -561,9 +612,21 @@ const A={
      else render();
      refreshPending();loadHealth()}
    catch(e){toast(e.message);btns.forEach(b=>{b.disabled=false;b.textContent="Check again"})}},
- async decide(d){const id=d.id,pat=($("#rp-"+id)||{}).value||"";
-   try{await send("POST",`/api/submissions/${id}/decide`,{decision:d.d,reviewer:"pastor",edited_text:d.d==="edited"?$("#ed-"+id).value:"",save_ruling:!!pat.trim(),claim_pattern:pat.trim(),note:($("#rn-"+id)||{}).value||""});
-     toast(d.d==="rejected"?"Rejected":"Approved"+(pat.trim()?" and saved as a ruling":""));closeAll();location.hash.startsWith("#/review/")?(location.hash="#/review"):render()}
+ async rewrite(d){const id=d.id,b=document.querySelector(`[data-act="rewrite"][data-id="${id}"]`),orig=$("#ed-"+id).value;b.disabled=true;b.textContent="Writing…";
+   try{const r=await send("POST",`/api/submissions/${id}/rewrite`);
+     $("#df-"+id).innerHTML=`<div class="fix" style="line-height:1.7"><b>Suggested changes</b> <span class="mut">(<del>removed</del> · <ins>added</ins>)</span><div style="margin-top:6px">${wordDiff(orig,r.revised_text)}</div>
+       ${r.unverified_references.length?`<div style="color:var(--bad);margin-top:6px">Check these references, they were not found: ${r.unverified_references.map(esc).join(", ")}</div>`:""}
+       <div class="row" style="margin-top:8px"><button class="btn sm" data-act="useRewrite" data-id="${id}">Use this version</button></div></div>`;
+     window._rw=window._rw||{};window._rw[id]=r.revised_text}
+   catch(e){toast(e.message)}finally{b.disabled=false;b.textContent="Suggest a rewrite"}},
+ pickFile(){$("#file").click()},
+ newCheck(){document.querySelector(".grid.split").classList.remove("done");$("#out").innerHTML="";$("#text").focus()},
+ async copyText(d){try{await navigator.clipboard.writeText(d.t);toast("Copied")}catch(e){toast("Could not copy, select the text instead")}},
+ useRewrite(d){$("#ed-"+d.id).value=window._rw[d.id];$("#df-"+d.id).innerHTML=`<div class="mut" style="margin-top:6px">Rewrite placed in the editor. Review it, then choose “Approve with my edits”.</div>`},
+ async decide(d){const id=d.id,pat=($("#rs-"+id)||{}).checked?(($("#rp-"+id)||{}).value||""):"",ed=$("#ed-"+id);
+   const dec=d.d==="approved"&&ed&&ed.value.trim()!==ed.defaultValue.trim()?"edited":d.d;
+   try{await send("POST",`/api/submissions/${id}/decide`,{decision:dec,reviewer:"pastor",edited_text:dec==="edited"?ed.value:"",save_ruling:!!pat.trim(),claim_pattern:pat.trim(),note:($("#rn-"+id)||{}).value||""});
+     toast((dec==="rejected"?"Rejected":dec==="edited"?"Approved with your edits":"Approved")+(pat.trim()?" and saved as a ruling":""));closeAll();location.hash.startsWith("#/review/")?(location.hash="#/review"):render()}
    catch(e){toast(e.message)}},
  async approveC(d){try{await send("POST",`/api/commitments/${d.id}/approve`);toast("Commitment approved");render()}catch(e){toast(e.message)}},
  async approveAll(){const ids=[...document.querySelectorAll('[data-act="approveC"]')].map(b=>b.dataset.id);for(const id of ids)await send("POST",`/api/commitments/${id}/approve`);toast(ids.length+" approved");render()},
@@ -578,6 +641,9 @@ const A={
    try{const r=await send("POST",`/api/churches/${cid()}/statement`,{text:t});toast(r.length+" commitments drafted. Review and approve them.");render()}
    catch(e){toast(e.message);b.disabled=false;b.textContent="Draft commitments"}},
  async delR(d){await send("DELETE","/api/rulings/"+d.id);toast("Ruling retired");render()}};
+document.addEventListener("change",async e=>{if(e.target.id!=="file"||!e.target.files[0])return;const f=e.target.files[0];e.target.value="";
+  try{const r=await fetch("/api/extract-text?filename="+encodeURIComponent(f.name),{method:"POST",body:f});const j=await r.json();if(!r.ok)throw new Error(j.detail||"Could not read the file");
+    $("#text").value=j.text;$("#text").dispatchEvent(new Event("input"));toast(`Loaded ${f.name} · ${j.words} words`)}catch(err){toast(err.message)}});
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el||el.tagName==="A")return;const f=A[el.dataset.act];if(f)f(el.dataset)});
 
 /* ---------- boot ---------- */
