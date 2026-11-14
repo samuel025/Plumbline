@@ -133,3 +133,26 @@ def test_file_upload_text_extraction():
     assert c.post("/api/extract-text?filename=a.exe", content=b"x").status_code == 415
     assert c.post("/api/extract-text?filename=a.pdf", content=b"not a pdf").status_code == 422
     assert c.post("/api/extract-text?filename=a.txt", content=b"").status_code == 400
+
+
+def test_refutes_stance_needs_a_real_quote_from_the_text():
+    from app import pipeline
+    text = "Some say good deeds earn salvation, but Scripture says otherwise."
+    ok = {"text": "good deeds earn salvation", "stance": "refutes", "stance_cue": "but Scripture says otherwise"}
+    pipeline.clean_stance(ok, text)
+    assert ok["stance"] == "refutes"
+    invented = {"text": "good deeds earn salvation", "stance": "refutes", "stance_cue": "this is plainly wrong"}
+    pipeline.clean_stance(invented, text)
+    assert invented["stance"] == "asserts"          # a cue that is not in the text is not trusted
+    nocue = {"text": "x", "stance": "refutes"}
+    pipeline.clean_stance(nocue, text)
+    assert nocue["stance"] == "asserts"
+    default = {"text": "x"}
+    pipeline.clean_stance(default, text)
+    assert default["stance"] == "asserts"           # doubt never counts as a refutation
+
+
+def test_judge_input_tags_rejected_views():
+    from app import pipeline
+    out = pipeline.numbered([{"kind": "doctrinal", "text": "A", "stance": "refutes"}, {"kind": "doctrinal", "text": "B", "stance": "asserts"}])
+    assert "A [the text REJECTS this view]" in out and "B [" not in out

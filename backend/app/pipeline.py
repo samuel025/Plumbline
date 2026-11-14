@@ -5,14 +5,35 @@ from .verdict import decide_full
 EXTRACT_SYS = """You split church-related text into checkable claims. Return ONLY JSON:
 {"claims":[{"text":str,"kind":"doctrinal|scriptural|pastoral_advice|factual",
 "reference":str|null,"quoted_text":str|null,
-"risk":"none|crisis|abuse_disclosure|medical_advice|legal_advice|replaces_professional_help"}],
+"risk":"none|crisis|abuse_disclosure|medical_advice|legal_advice|replaces_professional_help",
+"stance":"asserts|refutes","stance_cue":str|null}],
 "implies_pastor_authorship":bool}
 Rules: only extract statements that assert a doctrine, quote or cite Scripture, give advice that affects health, safety,
 legal or spiritual standing, or state a checkable fact. Skip pure encouragement, greetings and general exhortation
 ("we are never alone", "bring your worries to God"). One claim per statement; copy Scripture references and any quoted verse text exactly as written;
 mark risk=crisis for suicide/self-harm, abuse_disclosure for disclosed abuse. Use medical_advice, legal_advice or
 replaces_professional_help ONLY when the text itself gives such advice or tells someone to avoid or replace a doctor,
-counselor or lawyer; advice that encourages seeking professional help is risk "none". Never answer the text; only extract."""
+counselor or lawyer; advice that encourages seeking professional help is risk "none". Never answer the text; only extract.
+Stance: "asserts" when the text itself holds or teaches the claim (the default). Use "refutes" ONLY when the text states the claim as someone else's view
+in order to reject it ("Some say X, but Scripture says otherwise", "the error of X", "it is false that X"). For "refutes", copy into stance_cue the exact words
+from the text that show the rejection; if you cannot quote such words, the stance is "asserts". If the text endorses the view ("Some say X, and they are right"), it is "asserts"."""
+
+def _norm(t: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9 ]", " ", (t or "").lower()).split())
+
+def clean_stance(cl: dict, section_text: str) -> None:
+    """'refutes' is trusted only when the quoted cue really appears in the text; otherwise the claim counts as asserted."""
+    cue = _norm(cl.get("stance_cue"))
+    if cl.get("stance") == "refutes" and cue and cue in _norm(section_text):
+        cl["stance"] = "refutes"
+    else:
+        cl["stance"] = "asserts"
+
+REFUTES_TAG = " [the text REJECTS this view]"
+
+def numbered(claims: list[dict]) -> str:
+    return "\n".join(f"{i}. [{cl['kind']}] {cl['text']}" + (REFUTES_TAG if cl.get("stance") == "refutes" else "")
+                     for i, cl in enumerate(claims))
 
 def judge_system(church, commitments, rulings):
     cs = "\n".join(f"[{c['id']}] {c['text']}" for c in commitments)
@@ -31,7 +52,10 @@ a rejected ruling means "conflicts". Otherwise use "silent" only if the claim as
 exhortation that contradicts no commitment is "aligned" (cite the closest commitment id); if unsure, use "contested" with low confidence.
 Confidence guide: 0.9+ when a commitment states the same belief or the claim is generic comfort that contradicts nothing;
 0.7-0.85 when the match is partial or you had to interpret; below 0.6 when unsure. Do not give 0.7 to a claim that plainly matches.
-Never use "aligned" without citing a commitment id or a pastor ruling. Judge doctrinal and pastoral_advice claims; skip pure factual ones."""
+Never use "aligned" without citing a commitment id or a pastor ruling. Judge doctrinal and pastoral_advice claims; skip pure factual ones.
+Stance: a claim tagged [the text REJECTS this view] is a view the text quotes in order to reject it. Judge the text's rejection, not the view: if a commitment
+also rejects that view (or affirms its opposite), the label is "aligned" (cite that commitment); if the view is what a commitment affirms, the text opposes the
+church, so the label is "conflicts"; if no commitment bears on it, "silent". Untagged claims are the text's own position."""
 
 NOTES_HINT = """
 The text is sermon notes or an outline, so it may be fragments, bullets or shorthand ("grace - Eph 2:8-9 - not works").
@@ -78,7 +102,7 @@ def run(submission_id: int) -> dict:
         rulings = db.rows(c.execute("SELECT * FROM ruling WHERE church_id=?", (church["id"],)))
     text = sub["raw_text"]
     llm_ok, claims, findings, scripture, pastor_auth, llm_error = True, [], [], [], False, ""
-    heresy_hits = []
+    heresy_hits, rejected = [], set()
     sections = split_sections(text)
     seen_claims: set[str] = set()
     try:
@@ -90,19 +114,20 @@ def run(submission_id: int) -> dict:
                 if not key or key in seen_claims:      # the same sentence repeated in a long text is judged once
                     continue
                 seen_claims.add(key)
+                clean_stance(cl, sec)
                 cl["section"] = k
                 claims.append(cl)
         if claims and commitments:
             sysmsg = judge_system(church, commitments, rulings)
             for start in range(0, len(claims), JUDGE_BATCH):
                 batch = claims[start:start + JUDGE_BATCH]
-                numbered = "\n".join(f"{i}. [{cl['kind']}] {cl['text']}" for i, cl in enumerate(batch))
-                for f in llm.call_json(sysmsg, numbered, max_tokens=6000).get("findings", []):
+                numbered_batch = numbered(batch)
+                for f in llm.call_json(sysmsg, numbered_batch, max_tokens=6000).get("findings", []):
                     if isinstance(f.get("claim_index"), int) and 0 <= f["claim_index"] < len(batch):
                         f["claim_index"] += start
                         findings.append(f)
         if claims:   # global rule: applies to every church, whatever its own statement of faith says
-            heresy_hits = heresies.detect(claims)
+            heresy_hits, rejected = heresies.detect(claims)
     except llm.LLMUnavailable as e:
         llm_ok, llm_error = False, str(e)
     # Deterministic Scripture check: LLM-extracted claims plus any reference found in the raw text.
@@ -119,10 +144,12 @@ def run(submission_id: int) -> dict:
     # Scriptural/factual claims are covered by the Scripture check; the statement of faith being silent on them is not a doubt.
     findings = [f for f in findings if not (f.get("label") == "silent" and isinstance(f.get("claim_index"), int)
                 and 0 <= f["claim_index"] < len(claims) and claims[f["claim_index"]].get("kind") in ("scriptural", "factual"))]
+    # Rejecting a catalogued heresy needs no church-specific commitment: the church's silence on it is not a gap.
+    findings = [f for f in findings if not (f.get("label") == "silent" and f.get("claim_index") in rejected)]
     # Unjudged doctrinal claims must not slip through as approved.
     judged = {f.get("claim_index") for f in findings}
     for i, cl in enumerate(claims):
-        if cl["kind"] in ("doctrinal", "pastoral_advice") and i not in judged and llm_ok:
+        if cl["kind"] in ("doctrinal", "pastoral_advice") and i not in judged and i not in rejected and llm_ok:
             findings.append({"claim_index": i, "commitment_id": None, "label": "silent", "confidence": 0.0,
                              "evidence": cl["text"], "suggested_fix": None})
     status, reasons, flags = decide_full(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth,

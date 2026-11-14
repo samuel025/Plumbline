@@ -38,26 +38,33 @@ Rules:
 - A match needs the claim itself to state or clearly imply the teaching. Orthodox statements are NOT matches: "Jesus is fully God and fully man",
   "we are saved by grace through faith, and good works are its fruit", "obedience flows from gratitude" are orthodox.
 - Do not match on shared vocabulary alone. A claim about grace is not antinomian unless it says obedience or holiness does not matter.
+- A claim tagged [the text REJECTS this view] is quoted in order to reject it. If it states one of the listed teachings, still return the match, with stance "refutes".
 - stance "refutes" ONLY when the claim itself names or describes the teaching in order to reject it ("Some wrongly say...", "the heresy of...").
   If the claim states it flatly, or you cannot tell whether the speaker holds it, use "endorses" or "unclear". Doubt is never "refutes".
 - Return nothing for claims that match no entry. One match per claim and entry at most; put the claim's index exactly as numbered.
 - "why" is one plain sentence a pastor can read, naming what in the claim matches."""
 
-def detect(claims: list[dict]) -> list[dict]:
-    """Returns hits: {claim_index, heresy, stance, confidence, why}. Raises llm.LLMUnavailable if the model is unreachable."""
+def detect(claims: list[dict]) -> tuple[list[dict], set[int]]:
+    """Returns (hits, rejected): hits are {claim_index, heresy, stance, confidence, why} for claims that assert a listed teaching;
+    rejected holds the indexes of claims that only name such a teaching to reject it. Raises llm.LLMUnavailable if the model is unreachable."""
     idx = [i for i, c in enumerate(claims) if c.get("kind") in CHECKED_KINDS]
-    cat, hits = by_id(), []
+    cat, hits, rejected = by_id(), [], set()
     sysmsg = system_prompt()
     for start in range(0, len(idx), BATCH):
         part = idx[start:start + BATCH]
-        numbered = "\n".join(f"{j}. {claims[i]['text']}" for j, i in enumerate(part))
+        numbered = "\n".join(f"{j}. {claims[i]['text']}" + (" [the text REJECTS this view]" if claims[i].get("stance") == "refutes" else "")
+                             for j, i in enumerate(part))
         for m in llm.call_json(sysmsg, numbered, max_tokens=4000).get("matches", []):
             j, h = m.get("claim_index"), cat.get(m.get("heresy_id"))
             conf = m.get("confidence")
             if not (isinstance(j, int) and 0 <= j < len(part) and h and isinstance(conf, (int, float))):
                 continue
-            if m.get("stance") == "refutes" or conf < MIN_CONFIDENCE:
+            if conf < MIN_CONFIDENCE:
+                continue
+            if m.get("stance") == "refutes":
+                if claims[part[j]].get("stance") == "refutes":   # only when the extractor's quoted cue was verified
+                    rejected.add(part[j])
                 continue
             hits.append({"claim_index": part[j], "heresy": h, "stance": m.get("stance", "unclear"),
                          "confidence": float(conf), "why": (m.get("why") or "").strip()})
-    return hits
+    return hits, rejected

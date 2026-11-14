@@ -55,3 +55,7 @@ id,church_id,category,expected,text
 54,2,heresy,approved,"We are saved by grace through faith, not by works. Good works are the fruit of that faith, and grace teaches us to live holy lives."
 55,1,heresy,approved,"Some wrongly teach that Jesus was only a created being. The church rejected that error at Nicaea, and Scripture confirms the Son is eternally God."
 56,2,heresy,approved,"Some say that because we are under grace, obedience does not matter. That is the error of antinomianism, and Scripture rejects it."
+57,1,stance,approved,"Some say that if you do enough good deeds, God will count them toward your salvation. But Scripture says otherwise: we are saved by grace through faith, not by works (Ephesians 2:8-9)."
+58,2,stance,approved,"Many people wrongly believe that Jesus was merely a good teacher. That is false; he is the eternal Son of God, one God in three persons with the Father and the Spirit."
+59,1,stance,needs_review,"Some say that if you do enough good deeds, God will count them toward your salvation, and honestly they are right. Work hard and you will earn it."
+60,1,stance,needs_review,"Critics call this error Arianism, but they are wrong: Jesus was a created being and there was a time when the Son was not."
