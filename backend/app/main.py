@@ -217,7 +217,7 @@ def health():
 @app.get("/api/heresies")
 def heresy_catalog():
     """The global list of historically condemned teachings every check screens for."""
-    return heresies.catalog()
+    return [{**h, "learn": heresies.learn(h)} for h in heresies.catalog()]
 
 @app.get("/api/audit")
 def audit_log(limit: int = 60):

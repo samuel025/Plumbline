@@ -151,6 +151,9 @@ textarea:focus,input:focus,select.f:focus{border-color:var(--espresso);box-shado
 .badge.approved,.badge.edited{background:var(--ok-bg);color:var(--ok)}.badge.approved::before,.badge.edited::before{background:var(--ok)}
 .badge.needs_review{background:var(--warn-bg);color:#7a5410}.badge.needs_review::before{background:var(--warn)}
 .badge.blocked,.badge.rejected{background:var(--bad-bg);color:var(--bad)}.badge.blocked::before,.badge.rejected::before{background:var(--bad)}
+.learn{margin-top:12px;border-top:1px solid var(--line,#e6e1da);padding-top:10px}.learn summary{cursor:pointer;font-weight:500;font-size:13.5px}
+.learn h4{margin:12px 0 4px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ash,#6b6560)}.learn p{margin:0 0 4px}
+.learn .verse{margin:6px 0;padding:8px 10px;background:var(--bone,#f3efe9);border-radius:8px;font-size:13.5px}
 .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:var(--bone);color:var(--graphite);white-space:nowrap}
 .chip.warn{background:var(--warn-bg);color:#7a5410}.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.ok{background:var(--ok-bg);color:var(--ok)}
 
@@ -398,6 +401,10 @@ document.addEventListener("mousemove",e=>{const g=e.target.closest("[data-tip]")
   t.textContent=g.dataset.tip;t.style.opacity=1;t.style.left=Math.min(e.clientX+14,innerWidth-t.offsetWidth-10)+"px";t.style.top=(e.clientY+16)+"px"});
 
 /* ---------- shared renderers ---------- */
+const learnHTML=l=>l?`<details class="learn"><summary>Learn more: why the church rejected this</summary>
+    ${l.why?`<h4>Why it matters</h4><p>${esc(l.why)}</p>`:""}
+    ${l.passages&&l.passages.length?`<h4>Key passages</h4>${l.passages.map(p=>`<div class="verse"><b>${esc(p.reference)}</b> <span class="mut">(${esc(p.translation)})</span><br>${esc(p.text)}</div>`).join("")}`:""}
+    ${l.answer?`<h4>How the church answered</h4><p>${esc(l.answer)}</p>`:""}</details>`:"";
 function resultHTML(d,{withDecision=false,onCheck=false}={}){
   const v=d.verdict||{},s=d.submission,st=v.status||"needs_review",flags=(v.flags||[]).map((f,i)=>({...f,_i:i}));
   const summary={approved:"Every claim lines up with your commitments and every verse checks out.",needs_review:"A person should look at this before it is used.",blocked:"Do not publish or send this. Route it to a pastor."}[st];
@@ -409,7 +416,7 @@ function resultHTML(d,{withDecision=false,onCheck=false}={}){
   const ordered=[...flags].sort((a,b)=>(b.severity==="block")-(a.severity==="block")||a._i-b._i),firstIdx=ordered.length?ordered[0]._i:-1;
   const flagHTML=f=>`<details class="fl ${f.severity==="block"?"blk":"att"}" id="fl-${f._i}" ${f._i===firstIdx?"open":""}><summary><span class="dot"></span><b>${esc(f.title)}</b>${f.kind==="heresy"?`<span class="chip" style="margin-left:8px">Historic teaching</span>`:""}${f.severity==="block"?`<span class="sev">Blocked</span>`:""}</summary>
     <div class="fbody">${f.detail?`<p>${esc(f.detail)}</p>`:""}${f.source?`<div class="src">${esc(f.source)}</div>`:""}
-    ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
+    ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}${learnHTML(f.learn)}
     ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div></details>`;
   const okLines=cl=>[
     ...cl.scripture.filter(x=>x.result==="exact"||x.result==="paraphrase").map(x=>`<div class="okline"><span class="tick">✓</span><div><b>${esc(x.reference)}</b> ${x.result==="paraphrase"?"is a faithful paraphrase":"checks out"}${x.translation?` <span class="mut">(${esc(x.translation)})</span>`:""}${x.bible_text?`<div class="verse">${esc(x.bible_text)}</div>`:""}${x.note?`<div class="mut">${esc(x.note)}</div>`:""}</div></div>`),
@@ -535,7 +542,7 @@ V.standard=async()=>{
   const hzCard=`<div class="card"><div class="cardhead"><h2>Historic teachings always checked <span class="mut">· ${hz.length}</span></h2></div>
     <p class="mut" style="margin:-6px 0 12px">Every church is screened for these, whatever its own statement of faith says. A match always goes to a pastor.</p>
     <details><summary style="cursor:pointer;font-weight:500">Show the list</summary><ul class="list" style="margin-top:10px">${hz.map(h=>`<li><div style="font-size:14px;font-weight:500">${esc(h.name)} <span class="chip">${esc(AUTH[h.authority]||h.authority)}</span></div>
-      <div class="mut" style="margin-top:4px">${esc(h.teaches)}</div><div class="mut" style="margin-top:4px">${esc(h.condemned_by)}</div></li>`).join("")}</ul></details></div>`;
+      <div class="mut" style="margin-top:4px">${esc(h.teaches)}</div><div class="mut" style="margin-top:4px">${esc(h.condemned_by)}</div>${learnHTML(h.learn)}</li>`).join("")}</ul></details></div>`;
   
   const ap=cs.filter(c=>c.status==="approved"),dr=cs.filter(c=>c.status==="draft");
   const row=c=>`<li id="cm-${c.id}"><div class="spread" style="align-items:flex-start"><div><div class="ctext" style="font-size:14.5px">${esc(c.text)}</div>

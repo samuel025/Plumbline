@@ -12,7 +12,15 @@
    "Christ is a lesser god or a created being",
    "the Son is not of the same essence as the Father"
   ],
-  "orthodox": "The Son is eternally God, of one being with the Father (Nicene Creed)."
+  "orthodox": "The Son is eternally God, of one being with the Father (Nicene Creed).",
+  "why_it_matters": "If the Son is a creature, then the one who died for us is not God, and only God can save. It would also make worshipping Christ idolatry.",
+  "key_passages": [
+   "John 1:1-3",
+   "Colossians 1:16-17",
+   "John 10:30",
+   "Hebrews 1:3"
+  ],
+  "church_answer": "The Council of Nicaea (325) confessed the Son as \"of one substance with the Father\", defended by Athanasius, and Constantinople (381) reaffirmed it. It is the heart of the Nicene Creed."
  },
  {
   "id": "nestorianism",
@@ -26,7 +34,15 @@
    "the divine Christ and the human Jesus are two persons",
    "the Word merely dwelt in the man Jesus like a temple"
   ],
-  "orthodox": "Christ is one person in two natures; Mary is rightly called Theotokos, bearer of God (Ephesus 431)."
+  "orthodox": "Christ is one person in two natures; Mary is rightly called Theotokos, bearer of God (Ephesus 431).",
+  "why_it_matters": "If Christ is two persons joined only by agreement, then the one who suffered on the cross was only a man, and God himself never entered human life and death for us.",
+  "key_passages": [
+   "John 1:14",
+   "Galatians 4:4",
+   "Colossians 2:9",
+   "Luke 1:43"
+  ],
+  "church_answer": "Cyril of Alexandria opposed it, and the Council of Ephesus (431) affirmed Mary as Theotokos, \"bearer of God\", meaning the child she bore was truly God. Historians debate how far Nestorius himself held this view; the teaching itself was rejected."
  },
  {
   "id": "eutychianism",
@@ -40,7 +56,15 @@
    "his humanity was swallowed up by his deity",
    "Jesus was not truly human in the same way we are"
   ],
-  "orthodox": "Christ has two natures, fully God and fully man, without confusion or change (Chalcedon 451). Note: some Oriental Orthodox churches confess one united nature (miaphysitism) and reject this label."
+  "orthodox": "Christ has two natures, fully God and fully man, without confusion or change (Chalcedon 451). Note: some Oriental Orthodox churches confess one united nature (miaphysitism) and reject this label.",
+  "why_it_matters": "If Christ's humanity is dissolved into his divinity, he is no longer truly one of us and cannot stand in our place as our representative.",
+  "key_passages": [
+   "Hebrews 2:14-17",
+   "Hebrews 4:15",
+   "Philippians 2:6-8",
+   "1 Timothy 2:5"
+  ],
+  "church_answer": "The Council of Chalcedon (451) confessed Christ in two natures, \"without confusion, change, division or separation\", building on Pope Leo's Tome."
  },
  {
   "id": "docetism",
@@ -54,7 +78,15 @@
    "Christ did not really suffer or die on the cross",
    "the divine Christ left Jesus before the crucifixion"
   ],
-  "orthodox": "The Word became flesh (John 1:14); Jesus truly lived, suffered, died and rose in a real body."
+  "orthodox": "The Word became flesh (John 1:14); Jesus truly lived, suffered, died and rose in a real body.",
+  "why_it_matters": "If Jesus only seemed to suffer, the cross was a show and nothing was truly paid. A resurrection of a real body would also mean nothing.",
+  "key_passages": [
+   "1 John 4:2-3",
+   "John 1:14",
+   "Luke 24:39",
+   "1 John 1:1"
+  ],
+  "church_answer": "Ignatius of Antioch and Irenaeus opposed it, and the creeds stress that Christ \"was crucified under Pontius Pilate, suffered and was buried\"."
  },
  {
   "id": "modalism",
@@ -68,7 +100,15 @@
    "the Father himself died on the cross",
    "Father, Son and Spirit are just three names or roles for the same person"
   ],
-  "orthodox": "One God eternally in three distinct persons, Father, Son and Holy Spirit."
+  "orthodox": "One God eternally in three distinct persons, Father, Son and Holy Spirit.",
+  "why_it_matters": "If Father, Son and Spirit are only masks, the Son's prayers to the Father are pretend, the Father's love in sending the Son is staged, and the persons we meet at Jesus's baptism are not real.",
+  "key_passages": [
+   "Matthew 3:16-17",
+   "John 17:1-5",
+   "Matthew 28:19",
+   "John 14:16"
+  ],
+  "church_answer": "Tertullian (against Praxeas) gave the church its language of one God in three persons. The Nicene Creed and the Athanasian Creed keep the persons distinct."
  },
  {
   "id": "adoptionism",
@@ -82,7 +122,15 @@
    "God promoted a good man to divine sonship",
    "Jesus earned his divinity by his obedience"
   ],
-  "orthodox": "The Son is eternally God and became man in the incarnation."
+  "orthodox": "The Son is eternally God and became man in the incarnation.",
+  "why_it_matters": "If Jesus became divine later, then God himself did not enter the world to save us. Our hope would rest on a promoted man.",
+  "key_passages": [
+   "John 1:1-3",
+   "John 8:58",
+   "Philippians 2:5-8",
+   "Colossians 1:19"
+  ],
+  "church_answer": "The Synod of Antioch (268) condemned Paul of Samosata, and the Nicene Creed confesses the Son as eternally God."
  },
  {
   "id": "apollinarianism",
@@ -95,7 +143,15 @@
    "Christ had no human mind or soul",
    "the Logos replaced Jesus's human spirit"
   ],
-  "orthodox": "Christ assumed a complete human nature: body, soul and mind."
+  "orthodox": "Christ assumed a complete human nature: body, soul and mind.",
+  "why_it_matters": "Gregory of Nazianzus put it this way: what is not assumed is not healed. If Christ had no human mind, our minds and wills were not redeemed.",
+  "key_passages": [
+   "Luke 2:52",
+   "Mark 13:32",
+   "John 12:27",
+   "Hebrews 4:15"
+  ],
+  "church_answer": "The Council of Constantinople (381) rejected it, following the Cappadocian fathers: Christ took a complete human nature, body, soul and mind."
  },
  {
   "id": "monothelitism",
@@ -108,7 +164,14 @@
    "Christ had only a divine will",
    "Jesus had no human will of his own"
   ],
-  "orthodox": "Christ has a divine will and a human will, the human freely submitting to the divine (Gethsemane)."
+  "orthodox": "Christ has a divine will and a human will, the human freely submitting to the divine (Gethsemane).",
+  "why_it_matters": "If Christ had no human will, his obedience in Gethsemane was not a real human choice, and our own wills are left unhealed.",
+  "key_passages": [
+   "Luke 22:42",
+   "John 6:38",
+   "Matthew 26:39"
+  ],
+  "church_answer": "The Third Council of Constantinople (681), following Maximus the Confessor, confessed two wills in Christ, the human freely following the divine."
  },
  {
   "id": "tritheism",
@@ -121,7 +184,15 @@
    "there are three gods",
    "Father, Son and Spirit are three separate beings who cooperate like a committee"
   ],
-  "orthodox": "There is one God in three persons, one divine essence."
+  "orthodox": "There is one God in three persons, one divine essence.",
+  "why_it_matters": "Scripture insists that God is one. Three gods would break the first commandment and the confession that \"the Lord is one\".",
+  "key_passages": [
+   "Deuteronomy 6:4",
+   "Isaiah 45:5",
+   "John 10:30",
+   "1 Corinthians 8:6"
+  ],
+  "church_answer": "The Nicene and Athanasian creeds confess one divine essence in three persons, and the Cappadocian fathers explained how."
  },
  {
   "id": "socinianism",
@@ -135,7 +206,15 @@
    "the Holy Spirit is just a force or power, not a person",
    "the Trinity is a pagan invention"
   ],
-  "orthodox": "Jesus is God incarnate and the Holy Spirit is a divine person (Nicene Creed)."
+  "orthodox": "Jesus is God incarnate and the Holy Spirit is a divine person (Nicene Creed).",
+  "why_it_matters": "If Christ is merely a man, his death cannot bear the sins of the world and worshipping him is wrong. If the Spirit is only a force, he is not God's own presence with us.",
+  "key_passages": [
+   "John 20:28",
+   "Colossians 2:9",
+   "Acts 5:3-4",
+   "Titus 2:13"
+  ],
+  "church_answer": "Reformation churches rejected the Racovian Catechism (1605) and held to the historic creeds of Nicaea and Constantinople."
  },
  {
   "id": "ebionism",
@@ -149,7 +228,15 @@
    "you must keep the Law of Moses to be saved",
    "Paul corrupted the gospel"
   ],
-  "orthodox": "Jesus is fully God and fully man; salvation is by grace through faith, not by the works of the law (Galatians, Acts 15)."
+  "orthodox": "Jesus is fully God and fully man; salvation is by grace through faith, not by the works of the law (Galatians, Acts 15).",
+  "why_it_matters": "Reducing Jesus to a mere man removes the incarnation, and adding the law to faith turns the gospel into something we must earn.",
+  "key_passages": [
+   "John 1:14",
+   "Galatians 2:16",
+   "Acts 15:10-11",
+   "Romans 3:28"
+  ],
+  "church_answer": "Irenaeus opposed it in Against Heresies, and the Council of Jerusalem (Acts 15) settled that Gentile believers do not need the law to be saved."
  },
  {
   "id": "pelagianism",
@@ -165,7 +252,15 @@
    "original sin does not exist",
    "God's favor is a reward for how good we are"
   ],
-  "orthodox": "All are fallen in Adam and are saved by grace alone through faith, which also empowers obedience (Eph 2:8-9; Rom 5)."
+  "orthodox": "All are fallen in Adam and are saved by grace alone through faith, which also empowers obedience (Eph 2:8-9; Rom 5).",
+  "why_it_matters": "If we can obey and earn salvation ourselves, Christ's death was unnecessary and we have something to boast about. It also underestimates how deeply sin has damaged us.",
+  "key_passages": [
+   "Romans 5:12",
+   "Ephesians 2:1-9",
+   "Romans 3:23",
+   "Galatians 2:21"
+  ],
+  "church_answer": "Augustine opposed Pelagius, and the Councils of Carthage (418) and Ephesus (431) condemned it. Salvation is by grace, which also empowers obedience."
  },
  {
   "id": "gnosticism",
@@ -180,7 +275,15 @@
    "the God of the Old Testament is a different, lesser god",
    "only the spiritually enlightened can understand the real gospel"
   ],
-  "orthodox": "Creation is good; salvation is by faith in the crucified and risen Christ, open to all, not by hidden knowledge."
+  "orthodox": "Creation is good; salvation is by faith in the crucified and risen Christ, open to all, not by hidden knowledge.",
+  "why_it_matters": "It offers salvation to an educated few instead of to everyone who believes, treats the body and creation God called good as evil, and denies the incarnation.",
+  "key_passages": [
+   "Genesis 1:31",
+   "1 Timothy 4:4",
+   "1 Timothy 6:20-21",
+   "1 Corinthians 15:3-4"
+  ],
+  "church_answer": "Irenaeus refuted it in Against Heresies (c. 180), appealing to the apostles' public teaching, the church's rule of faith and the New Testament writings."
  },
  {
   "id": "marcionism",
@@ -194,7 +297,15 @@
    "we should throw out the Old Testament",
    "the Old Testament God is angry and Jesus's God is loving, so they are different gods"
   ],
-  "orthodox": "The God of Israel is the Father of Jesus Christ; the whole Bible is one story."
+  "orthodox": "The God of Israel is the Father of Jesus Christ; the whole Bible is one story.",
+  "why_it_matters": "It cuts Jesus off from the Scriptures he read, the promises he fulfilled and the God whose character he reveals. Without the Old Testament, the gospel's own words (Messiah, sacrifice, kingdom) lose their meaning.",
+  "key_passages": [
+   "Luke 24:27",
+   "Matthew 5:17",
+   "2 Timothy 3:16",
+   "Romans 15:4"
+  ],
+  "church_answer": "Marcion was excommunicated at Rome (c. 144), Tertullian wrote against him, and the church kept the Old Testament while recognising the New Testament writings."
  },
  {
   "id": "manichaeism",
@@ -208,7 +319,15 @@
    "the material world was made by the dark power",
    "the soul is a spark of light trapped in a body"
   ],
-  "orthodox": "God alone is eternal and good; evil is a corruption of creation, not an equal power."
+  "orthodox": "God alone is eternal and good; evil is a corruption of creation, not an equal power.",
+  "why_it_matters": "If evil is an eternal power equal to God, God is not sovereign and evil can never be finally defeated. Matter is not evil, because God made it good.",
+  "key_passages": [
+   "Genesis 1:31",
+   "Colossians 1:16",
+   "Romans 8:38-39",
+   "1 Timothy 4:4"
+  ],
+  "church_answer": "Augustine, once a Manichee himself, refuted it. Evil is a corruption of what God made good, not a rival power."
  },
  {
   "id": "montanism",
@@ -222,7 +341,15 @@
    "the Spirit is giving us a message that goes beyond and overrides Scripture",
    "only our prophet speaks the final word of God"
   ],
-  "orthodox": "Scripture is the final, sufficient rule; any prophecy is tested by it (1 Thess 5:20-21). Note: simply believing prophecy continues today is not Montanism."
+  "orthodox": "Scripture is the final, sufficient rule; any prophecy is tested by it (1 Thess 5:20-21). Note: simply believing prophecy continues today is not Montanism.",
+  "why_it_matters": "If new prophecy can override the apostles' witness, the gospel has no fixed anchor and any leader can claim a higher word. Believing that prophecy continues today is not the same thing.",
+  "key_passages": [
+   "Galatians 1:8-9",
+   "Jude 1:3",
+   "1 Thessalonians 5:19-21",
+   "1 John 4:1"
+  ],
+  "church_answer": "Synods in Asia Minor rejected it in the 2nd century. The church tested prophecy against apostolic teaching and the rule of faith."
  },
  {
   "id": "donatism",
@@ -235,7 +362,14 @@
    "baptism does not count if the pastor is a sinner",
    "a sinful minister's sacraments are invalid"
   ],
-  "orthodox": "The validity of the sacraments rests on Christ's promise, not on the minister's worthiness."
+  "orthodox": "The validity of the sacraments rests on Christ's promise, not on the minister's worthiness.",
+  "why_it_matters": "If the validity of the sacraments depended on the minister's holiness, no one could trust Christ's promise. The church would become a club for the pure and not a home for forgiven sinners.",
+  "key_passages": [
+   "Matthew 13:24-30",
+   "Philippians 1:15-18",
+   "1 Corinthians 3:6-7"
+  ],
+  "church_answer": "Augustine argued against the Donatists, and the Councils of Arles (314) and Carthage (411) rejected the teaching."
  },
  {
   "id": "antinomianism",
@@ -250,7 +384,15 @@
    "God does not see the sins of believers so repentance is unnecessary",
    "the law has no place in the Christian life"
   ],
-  "orthodox": "Grace saves and then transforms; the believer pursues holiness as the fruit of faith (Rom 6:1-2; Titus 2:11-12)."
+  "orthodox": "Grace saves and then transforms; the believer pursues holiness as the fruit of faith (Rom 6:1-2; Titus 2:11-12).",
+  "why_it_matters": "It treats grace as permission. Paul answers that those who died to sin cannot go on living in it, and that the same grace which saves also teaches us to renounce ungodliness.",
+  "key_passages": [
+   "Romans 6:1-2",
+   "Titus 2:11-12",
+   "James 2:17",
+   "Jude 1:4"
+  ],
+  "church_answer": "Luther opposed Johann Agricola in the 1530s, and the Formula of Concord (1577) and the Westminster Confession (1646, ch. 19) affirm the law's continuing role as a guide for believers."
  },
  {
   "id": "judaizing",
@@ -263,7 +405,15 @@
    "you must keep the Torah to be saved",
    "faith in Jesus is not enough without circumcision or the Sabbath law"
   ],
-  "orthodox": "Salvation is by grace through faith in Christ alone (Gal 2:16; Acts 15)."
+  "orthodox": "Salvation is by grace through faith in Christ alone (Gal 2:16; Acts 15).",
+  "why_it_matters": "Adding any requirement to faith in Christ turns the gospel into a transaction. Paul says it makes Christ's death pointless and cuts people off from grace.",
+  "key_passages": [
+   "Galatians 2:16",
+   "Galatians 5:2-4",
+   "Acts 15:10-11",
+   "Colossians 2:16-17"
+  ],
+  "church_answer": "The Council of Jerusalem (Acts 15, about AD 49) settled the question, and Paul's letter to the Galatians defends it."
  },
  {
   "id": "universalism",
@@ -277,7 +427,15 @@
    "there is no eternal hell for anyone",
    "all roads lead to heaven"
   ],
-  "orthodox": "Scripture teaches final judgment and salvation through Christ alone (John 14:6; Matt 25:46). Traditions differ on how to state this, so a pastor should decide."
+  "orthodox": "Scripture teaches final judgment and salvation through Christ alone (John 14:6; Matt 25:46). Traditions differ on how to state this, so a pastor should decide.",
+  "why_it_matters": "Scripture ties salvation to faith in Christ and speaks of a final judgment, so universal salvation makes its warnings and appeals meaningless. Passages like 1 Timothy 2:4 show why this question is debated: they express God's desire that all be saved. Traditions differ on how to state this, so a pastor should decide.",
+  "key_passages": [
+   "John 3:36",
+   "Matthew 25:46",
+   "John 14:6",
+   "1 Timothy 2:4"
+  ],
+  "church_answer": "Origen's view was condemned at Constantinople II (553), though some historians dispute exactly how. Augustine opposed it, and traditions today differ on how far they allow hope for all."
  },
  {
   "id": "prosperity",
@@ -292,6 +450,14 @@
    "if you were truly faithful you would be healed",
    "God wants every believer to be wealthy"
   ],
-  "orthodox": "God cares for his people's needs but promises suffering as well as blessing, and gives himself, not riches, as the reward (Phil 4:11-13; John 16:33)."
+  "orthodox": "God cares for his people's needs but promises suffering as well as blessing, and gives himself, not riches, as the reward (Phil 4:11-13; John 16:33).",
+  "why_it_matters": "It makes faith a tool for getting things and reads sickness or poverty as failure. That contradicts the lives of Christ and the apostles, and it can burden the poor and the ill with false guilt.",
+  "key_passages": [
+   "2 Corinthians 12:7-10",
+   "Philippians 4:11-13",
+   "Luke 12:15",
+   "1 Timothy 6:6-10"
+  ],
+  "church_answer": "The Lausanne Movement's Cape Town Commitment (2010) and many denominations have denounced it as a distortion of the gospel."
  }
 ]

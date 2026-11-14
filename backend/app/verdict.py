@@ -1,6 +1,7 @@
 """Verdict engine: pure function. Approves only when every check is clean; any doubt goes to a person.
 Every non-approved verdict carries structured FLAGS explaining exactly why."""
 import re
+from . import heresies
 CONF_MIN = 0.75
 RISK_LABELS = {"medical_advice": "medical advice", "legal_advice": "legal advice",
                "replaces_professional_help": "replacing professional help"}
@@ -38,8 +39,11 @@ HUMAN_ONLY_RE = re.compile(
     r"\b(written|wrote|authored|composed)\s+(entirely|solely|completely|all)?\s*(by|himself|herself)\b[^.]{0,60}\b(no one else|nobody else|without (any )?(help|ai|assistance)|alone)\b|"
     r"\b(no one else|nobody else) (helped|wrote|assisted)\b|\bwithout (any )?(ai|artificial intelligence)\b|\bwritten entirely by\b", re.I)
 
-def _flag(kind, severity, title, claim="", detail="", source="", fix=""):
-    return {"kind": kind, "severity": severity, "title": title, "claim": claim, "detail": detail, "source": source, "fix": fix}
+def _flag(kind, severity, title, claim="", detail="", source="", fix="", learn=None):
+    f = {"kind": kind, "severity": severity, "title": title, "claim": claim, "detail": detail, "source": source, "fix": fix}
+    if learn:
+        f["learn"] = learn
+    return f
 
 def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_pastor_authorship=False,
                 commitments=None, llm_error="", heresy_hits=None, raw_text=""):
@@ -114,7 +118,7 @@ def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_p
         flags.append(_flag("heresy", "review", f"Resembles a condemned teaching: {hz['name']}", ctext(h["claim_index"]),
             (h.get("why") or hz["teaches"]) + f" {hz['name']} teaches: {hz['teaches']}",
             hz["condemned_by"] + (" (contested today)" if hz["authority"] == "contested" else ""),
-            "Orthodox position: " + hz["orthodox"] + " Rewrite to match it, or have a pastor decide."))
+            "Orthodox position: " + hz["orthodox"] + " Rewrite to match it, or have a pastor decide.", learn=heresies.learn(hz)))
     if raw_text and HUMAN_ONLY_RE.search(raw_text):
         flags.append(_flag("authorship", "review", "Says it was written without AI help", "",
             "The text says it was written entirely by a person, with no help. Plumbline cannot confirm that, and it conflicts with AI-assisted content.",

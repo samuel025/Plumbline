@@ -240,3 +240,14 @@ def test_second_look_upgrades_only_on_yes_plus_shared_wording(monkeypatch):
     conflict = [{"claim_index": 0, "commitment_id": 1, "label": "conflicts", "confidence": 0.9, "evidence": "x"}]
     monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "commitment_id": 1, "same_belief": "yes", "why": "x"}]})
     assert pipeline.second_look(COMMS, claims, conflict)[0]["label"] == "conflicts"       # a conflict is never overturned
+
+
+def test_heresy_catalog_is_complete_and_every_passage_is_real():
+    from app import bible, heresies
+    for h in heresies.catalog():
+        for k in ("name", "teaches", "condemned_by", "orthodox", "why_it_matters", "church_answer", "authority"):
+            assert h.get(k), (h["id"], k)
+        assert h["key_passages"], h["id"]
+        learn = heresies.learn(h)
+        assert len(learn["passages"]) == len(h["key_passages"]), (h["id"], "a key passage does not resolve in the Bible text")
+        assert all(p["text"] for p in learn["passages"])

@@ -24,6 +24,18 @@ def catalog() -> list[dict]:
 def by_id() -> dict:
     return {h["id"]: h for h in catalog()}
 
+def learn(h: dict) -> dict:
+    """The teaching behind a flag: why the church rejected it, the key passages (real text from our Bible files), how the church answered."""
+    from . import bible
+    passages = []
+    for ref in h.get("key_passages", []):
+        for tr in ("WEB", "KJV", "BSB", "ASV"):
+            t = bible.lookup(ref, tr)
+            if t:
+                passages.append({"reference": ref, "translation": tr, "text": t})
+                break
+    return {"why": h.get("why_it_matters", ""), "passages": passages, "answer": h.get("church_answer", "")}
+
 def system_prompt() -> str:
     entries = "\n".join(
         f"- {h['id']}: {h['name']}. Teaches: {h['teaches']} Typical statements: " + "; ".join(f'"{m}"' for m in h["markers"])
