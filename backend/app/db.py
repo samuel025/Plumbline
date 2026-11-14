@@ -68,6 +68,20 @@ def _to_pg(sql):
     return sql.replace("%", "%%").replace("?", "%s")
 
 
+class _PgCursor:
+    def __init__(self, cur, lastrowid):
+        self._cur, self.lastrowid = cur, lastrowid
+
+    def fetchone(self):
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        return self._cur.fetchall()
+
+    def __iter__(self):
+        return iter(self._cur)
+
+
 class _PgConn:
     """Mimics the slice of sqlite3.Connection the app uses."""
     def __init__(self, conn):
@@ -79,8 +93,7 @@ class _PgConn:
         if want_id:
             sql += " RETURNING id"
         cur = self._c.execute(_to_pg(sql), tuple(args))
-        cur.lastrowid = cur.fetchone()["id"] if want_id else None
-        return cur
+        return _PgCursor(cur, cur.fetchone()["id"] if want_id else None)
 
     def commit(self):
         self._c.commit()

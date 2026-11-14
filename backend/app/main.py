@@ -196,8 +196,8 @@ def timeline(cid: int, days: int = 14):
     out = {(start + timedelta(d)).isoformat(): {"approved": 0, "needs_review": 0, "blocked": 0} for d in range(days)}
     with db.session() as c:
         for r in c.execute(
-            """SELECT date(s.created_at) d, v.status st, COUNT(*) n FROM submission s JOIN verdict v ON v.submission_id=s.id
-               WHERE s.church_id=? AND date(s.created_at)>=? GROUP BY d, st""", (cid, start.isoformat())):
+            """SELECT substr(s.created_at,1,10) d, v.status st, COUNT(*) n FROM submission s JOIN verdict v ON v.submission_id=s.id
+               WHERE s.church_id=? AND substr(s.created_at,1,10)>=? GROUP BY substr(s.created_at,1,10), v.status""", (cid, start.isoformat())):
             if r["d"] in out and r["st"] in out[r["d"]]:
                 out[r["d"]][r["st"]] = r["n"]
     return [{"day": k, **v} for k, v in out.items()]
