@@ -407,7 +407,7 @@ function resultHTML(d,{withDecision=false,onCheck=false}={}){
   const secs=d.sections||[];
   const short=(t,n=95)=>{t=(t||"").replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n-1)+"…":t};
   const ordered=[...flags].sort((a,b)=>(b.severity==="block")-(a.severity==="block")||a._i-b._i),firstIdx=ordered.length?ordered[0]._i:-1;
-  const flagHTML=f=>`<details class="fl ${f.severity==="block"?"blk":"att"}" id="fl-${f._i}" ${f._i===firstIdx?"open":""}><summary><span class="dot"></span><b>${esc(f.title)}</b>${f.severity==="block"?`<span class="sev">Blocked</span>`:""}</summary>
+  const flagHTML=f=>`<details class="fl ${f.severity==="block"?"blk":"att"}" id="fl-${f._i}" ${f._i===firstIdx?"open":""}><summary><span class="dot"></span><b>${esc(f.title)}</b>${f.kind==="heresy"?`<span class="chip" style="margin-left:8px">Historic teaching</span>`:""}${f.severity==="block"?`<span class="sev">Blocked</span>`:""}</summary>
     <div class="fbody">${f.detail?`<p>${esc(f.detail)}</p>`:""}${f.source?`<div class="src">${esc(f.source)}</div>`:""}
     ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
     ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div></details>`;
@@ -530,7 +530,13 @@ V.review=async()=>{
    ${q.length?`<div class="grid mdl"><div class="card qlist" style="padding:8px">${list}</div><div class="card">${detail}</div></div>`:`<div class="card">${detail}</div>`}`};
 
 V.standard=async()=>{
-  const cs=await api(`/api/churches/${cid()}/commitments`);
+  const [cs,hz]=await Promise.all([api(`/api/churches/${cid()}/commitments`),api("/api/heresies")]);
+  const AUTH={ecumenical:"Ecumenical councils and the early church",reformation:"Reformation confessions",modern:"Modern denunciation",contested:"Contested today"};
+  const hzCard=`<div class="card"><div class="cardhead"><h2>Historic teachings always checked <span class="mut">· ${hz.length}</span></h2></div>
+    <p class="mut" style="margin:-6px 0 12px">Every church is screened for these, whatever its own statement of faith says. A match always goes to a pastor.</p>
+    <details><summary style="cursor:pointer;font-weight:500">Show the list</summary><ul class="list" style="margin-top:10px">${hz.map(h=>`<li><div style="font-size:14px;font-weight:500">${esc(h.name)} <span class="chip">${esc(AUTH[h.authority]||h.authority)}</span></div>
+      <div class="mut" style="margin-top:4px">${esc(h.teaches)}</div><div class="mut" style="margin-top:4px">${esc(h.condemned_by)}</div></li>`).join("")}</ul></details></div>`;
+  
   const ap=cs.filter(c=>c.status==="approved"),dr=cs.filter(c=>c.status==="draft");
   const row=c=>`<li id="cm-${c.id}"><div class="spread" style="align-items:flex-start"><div><div class="ctext" style="font-size:14.5px">${esc(c.text)}</div>
     <div class="row" style="margin-top:6px">${c.topic?`<span class="chip">${esc(c.topic)}</span>`:""}<span class="mut">v${c.version}</span>${c.source_excerpt?`<span class="mut" title="${esc(c.source_excerpt)}">· source verified</span>`:`<span class="mut">· no source excerpt</span>`}</div></div>
@@ -547,7 +553,7 @@ V.standard=async()=>{
     <textarea id="stmt" placeholder="Paste a statement of faith (synthetic data only)"></textarea>
     <button class="btn" id="imp" style="margin-top:12px" data-act="importStmt">Draft commitments</button></div>
     <div class="card"><div class="cardhead"><h2>Add one manually</h2></div><div class="field"><textarea class="sm" id="newc" placeholder="e.g. We baptize believers only, by immersion."></textarea></div>
-    <div class="field"><input id="newt" placeholder="Topic (optional)"></div><button class="btn ghost" data-act="addC">Add as draft</button></div></div></div>`};
+    <div class="field"><input id="newt" placeholder="Topic (optional)"></div><button class="btn ghost" data-act="addC">Add as draft</button></div>${hzCard}</div></div>`};
 
 V.rulings=async()=>{
   const r=await api(`/api/churches/${cid()}/rulings`);
