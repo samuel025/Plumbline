@@ -1,0 +1,43 @@
+id,reference,quote,expected
+1,John 3:16,"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",exact
+2,Psalms 23:1,The LORD is my shepherd; I shall not want.,exact
+3,Romans 8:28,"And we know that God works all things together for the good of those who love Him, who are called according to His purpose.",exact
+4,Philippians 4:13,I can do all things through Christ who strengthens me.,exact
+5,Proverbs 3:5-6,"Trust in the LORD with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths.",exact
+6,Isaiah 40:31,"but those who wait for the LORD will renew their strength.They will mount up with wings like eagles.They will run, and not be weary.They will walk, and not faint.",exact
+7,Matthew 11:28,"Come to Me, all you who are weary and burdened, and I will give you rest.",exact
+8,Jeremiah 29:11,"For I know the thoughts that I think toward you, saith Jehovah, thoughts of peace, and not of evil, to give you hope in your latter end.",exact
+9,John 3:16,"God loved the world so much that he gave his only Son, so that everyone who believes in him will not die but have eternal life.",faithful
+10,Romans 3:23,Everyone has sinned and fallen short of God's glory.,faithful
+11,Ephesians 2:8-9,"You are saved by grace through faith. It is not your own doing but God's gift, not something you earned by works.",faithful
+12,Philippians 4:6,Don't be anxious about anything; pray about everything and thank God.,faithful
+13,Matthew 11:28,Jesus invites everyone who is tired and burdened to come to him for rest.,faithful
+14,Psalms 23:1,"The Lord is my shepherd, so I lack nothing.",faithful
+15,Proverbs 3:5,Trust in the Lord completely and don't rely on your own understanding.,faithful
+16,1 John 1:9,"If we admit our sins, God is faithful and just to forgive us and cleanse us from all wrongdoing.",faithful
+17,Romans 6:23,"The payment for sin is death, but God's free gift is eternal life in Christ Jesus our Lord.",faithful
+18,James 2:17,"Faith by itself, if it has no works, is dead.",faithful
+19,,Love is patient and kind; it does not envy or boast.,faithful
+20,John 3:16,God so loved the good people of the world that whoever is good enough will have eternal life.,distorted
+21,Ephesians 2:8-9,"We are saved by our good works, not by faith.",distorted
+22,Romans 8:28,"God makes everything work out well for everyone, whether or not they love him.",distorted
+23,Proverbs 13:24,Never discipline your children; love means letting them do whatever they want.,distorted
+24,Philippians 4:13,"I can do whatever I want, because God must grant every wish I make.",distorted
+25,Matthew 7:1,"Never judge anyone ever, and never tell anyone they are wrong.",distorted
+26,1 Timothy 6:10,Money is the root of all evil.,distorted
+27,Jeremiah 29:11,"God promises every believer a life free of hardship, with wealth and success.",distorted
+28,Romans 3:23,No one has sinned; everyone is born good.,distorted
+29,,God helps those who help themselves.,not_in_bible
+30,,Cleanliness is next to godliness.,not_in_bible
+31,,God will never give you more than you can handle.,not_in_bible
+32,,This too shall pass.,not_in_bible
+33,,The Lord works in mysterious ways.,not_in_bible
+34,,Everything happens for a reason.,not_in_bible
+35,,God never closes a door without opening a window.,not_in_bible
+36,Psalms 24:1,The Lord is my shepherd; I shall not want.,wrong_ref
+37,Romans 8:16,"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",wrong_ref
+38,Romans 3:3,"For all have sinned, and come short of the glory of God.",wrong_ref
+39,Proverbs 4:5,Trust in the LORD with all thine heart; and lean not unto thine own understanding.,wrong_ref
+40,John 3:16,"For God so loved the world, that he gave his only begotten Son, that whosoever worketh good should not perish, but have everlasting life.",distorted
+41,Ephesians 2:8-9,"For by works are ye saved through faith; and that of yourselves: it is the reward of men: Of works, that any man should boast.",distorted
+42,Romans 8:28,"And we know that all things work together for good to them that hate God, to them who are the called according to his purpose.",distorted
