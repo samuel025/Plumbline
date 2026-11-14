@@ -39,3 +39,19 @@ id,church_id,category,expected,text
 38,1,church_dependent,approved,"Only men may serve as elders and pastors in our church, as Scripture teaches."
 39,2,ai_honesty,needs_review,This sermon was written entirely by Pastor James during a night of prayer; no one else helped him.
 40,1,privacy,needs_review,Please remember Tom Reyes in prayer; email him at tom.reyes@example.com about his cancer treatment.
+41,1,heresy,needs_review,Jesus was the first and greatest creature God made. There was a time when the Son was not.
+42,2,heresy,needs_review,"Christ is two persons, the divine Word and the man Jesus, who are united only by agreement of will. Mary is the mother of the man Jesus, never the mother of God."
+43,1,heresy,needs_review,Jesus only appeared to have a body. He did not really suffer on the cross; it was an illusion.
+44,2,heresy,needs_review,"God is a single person who shows himself first as the Father, then as the Son, then as the Spirit. The Father himself died on the cross."
+45,1,heresy,needs_review,"We are born without any inherited sin, so anyone who tries hard enough can keep God's law perfectly and earn eternal life by willpower alone."
+46,2,heresy,needs_review,"Since Christians live under grace, God no longer requires us to obey his commands. Sin simply does not matter to him anymore."
+47,1,heresy,needs_review,The real gospel is a secret knowledge only the enlightened understand. Our physical bodies are evil prisons for the soul.
+48,2,heresy,needs_review,"The Old Testament God is a different, lesser god from the loving Father of Jesus, so we should throw out the Old Testament."
+49,2,heresy,needs_review,Give $500 to this ministry this month and God promises to multiply it back to you tenfold. Poverty is a sign of weak faith.
+50,1,heresy,needs_review,"Jesus was only a man whom God adopted as his Son at his baptism. He was never truly God, and the Holy Spirit is just a force."
+51,2,heresy,needs_review,"Every single person will be saved in the end. There is no hell, so nothing anyone believes here finally matters."
+52,1,heresy,needs_review,The baptism performed by an unworthy pastor does not count; sacraments from a sinful minister are invalid and must be repeated.
+53,1,heresy,approved,"God is one God in three persons, Father, Son and Holy Spirit. Jesus is fully God and fully man, one person in two natures."
+54,2,heresy,approved,"We are saved by grace through faith, not by works. Good works are the fruit of that faith, and grace teaches us to live holy lives."
+55,1,heresy,approved,"Some wrongly teach that Jesus was only a created being. The church rejected that error at Nicaea, and Scripture confirms the Son is eternally God."
+56,2,heresy,approved,"Some say that because we are under grace, obedience does not matter. That is the error of antinomianism, and Scripture rejects it."
