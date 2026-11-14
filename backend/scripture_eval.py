@@ -15,15 +15,19 @@ def run_one(ref, quote, mode):
 def main(mode="baseline"):
     rows = list(csv.DictReader(open(os.path.join(os.path.dirname(__file__), "..", "data", "scripture_eval.csv"))))
     good_bad = good_n = bad_miss = bad_n = 0
-    for r in rows:
-        got = run_one(r["reference"], r["quote"], mode)
+    if mode == "full":
+        from app import scripture
+        verdicts = scripture.verify_many([(r["reference"] or None, r["quote"]) for r in rows])
+    for k, r in enumerate(rows):
+        got = verdicts[k]["result"] if mode == "full" else run_one(r["reference"], r["quote"], mode)
         good = r["expected"] in ("exact", "faithful")
         ok = (got in PASS) == good
         good_n += good; bad_n += not good
         if not ok:
             if good: good_bad += 1
             else: bad_miss += 1
-            print(f"XX #{r['id']:>2} {r['expected']:<12} got={got:<12} {r['reference']:<16} {r['quote'][:60]}")
+            note = (verdicts[k].get("note") or "")[:110] if mode == "full" else ""
+            print(f"XX #{r['id']:>2} {r['expected']:<12} got={got:<12} {r['reference']:<16} {r['quote'][:50]}\n      {note}")
     print(f"\n[{mode}] bad items flagged: {bad_n - bad_miss}/{bad_n} (missed {bad_miss});  good items wrongly flagged: {good_bad}/{good_n}")
 
 if __name__ == "__main__":

@@ -94,3 +94,125 @@ def check(reference: str, quoted: str | None) -> dict:
     best = max(found, key=lambda tr: _grade(quoted, found[tr])[1])
     res, ratio = _grade(quoted, found[best])
     return {"reference": reference, "bible_text": found[best], "result": res, "similarity": round(ratio, 2), "translation": best}
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Bible-wide search: find where a quote's words occur anywhere in the bundled translations.
+# ---------------------------------------------------------------------------------------------------------------
+import math
+from array import array
+from collections import defaultdict
+
+_STOP = set("""a an the and or but if so as at by for from in into of on onto to unto with without upon is are was were be been am
+it its he him his she her they them their we us our you your ye thou thee thy thine i me my not no nor that this these those which who whom
+whose what when then than there here shall will would should could may might can do does did doth hath have has had said saith also all""".split())
+
+def _stem(w: str) -> str:
+    for suf in ("ing", "eth", "est", "ed", "es", "s"):
+        if w.endswith(suf) and len(w) - len(suf) >= 3:
+            return w[:-len(suf)]
+    return w
+
+def tokens(text: str) -> list[str]:
+    return [_stem(w) for w in re.findall(r"[a-z]+", text.lower()) if w not in _STOP]
+
+_IDX: dict = {}
+
+def _index() -> dict:
+    """Inverted index over single verses of every translation: token -> array of doc ids. Built once, on first use."""
+    if _IDX:
+        return _IDX
+    docs, post = [], defaultdict(lambda: array("I"))
+    order, pos = {}, {}
+    for tr in TRANSLATIONS:
+        vs = verses(tr)
+        order[tr] = list(vs)
+        pos[tr] = {k: i for i, k in enumerate(order[tr])}
+        for key, text in vs.items():
+            d = len(docs)
+            docs.append((tr, key))
+            for t in set(tokens(text)):
+                post[t].append(d)
+    _IDX.update(docs=docs, post=dict(post), order=order, pos=pos, n=len(docs))
+    return _IDX
+
+def _chapter(key: str) -> str:
+    return key.rsplit(":", 1)[0]
+
+def _window(tr: str, start: int, size: int) -> tuple[str, str] | None:
+    ix = _index(); keys = ix["order"][tr]
+    if start < 0 or start + size > len(keys):
+        return None
+    part = keys[start:start + size]
+    if len({_chapter(k) for k in part}) != 1:
+        return None
+    ref = part[0] if size == 1 else f"{part[0]} - {part[-1].rsplit(':', 1)[1]}"
+    return ref, " ".join(verses(tr)[k] for k in part)
+
+def _idf(t: str) -> float:
+    ix = _index()
+    return math.log(ix["n"] / (1 + len(ix["post"].get(t, ())))) + 1
+
+def window_scores(qtoks: set, text: str) -> tuple[float, float]:
+    """(coverage, precision): how much of the quote's meaningful words the passage contains, and how focused the passage is."""
+    wt = set(tokens(text))
+    hit = sum(_idf(t) for t in qtoks & wt)
+    cov = hit / (sum(_idf(t) for t in qtoks) or 1)
+    prec = hit / (sum(_idf(t) for t in wt) or 1)
+    return cov, prec
+
+_BOUNDARY = ",;:.!?—–-\"“‘'("
+
+def _piece_in(piece: str, passage: str) -> bool:
+    """The piece appears word-for-word, and begins at the start of the passage or after punctuation. A fragment that begins
+    mid-phrase ('money is the root of all evil' out of 'the love of money is...') may have dropped a qualifier, so it is not exact."""
+    words = re.findall(r"[a-z0-9]+", piece.lower())
+    if not words:
+        return False
+    rx = re.compile(r"(?<![a-z0-9])" + r"[^a-z0-9]+".join(map(re.escape, words)) + r"(?![a-z0-9])", re.I)
+    for m in rx.finditer(passage.replace("’", "'")):
+        before = passage[:m.start()].rstrip()
+        if not before or before[-1] in _BOUNDARY:
+            return True
+    return False
+
+def contains_quote(quote: str, passage: str) -> bool:
+    """Strict: every ellipsis-separated piece of the quote appears word-for-word in the passage, at a clause start."""
+    pieces = [p for p in re.split(r"\.{2,}|…", quote) if re.search(r"[A-Za-z0-9]", p)]
+    return bool(pieces) and all(_piece_in(p, passage) for p in pieces)
+
+def search(quote: str, k: int = 3, max_window: int = 3) -> list[dict]:
+    """Best-matching passages (1-3 verses) for a quote, across all translations, best first."""
+    q = set(tokens(quote))
+    if not q:
+        return []
+    ix = _index()
+    score: dict[int, float] = defaultdict(float)
+    for t in q:
+        for d in ix["post"].get(t, ()):
+            score[d] += _idf(t)
+    best: dict[tuple, dict] = {}
+    for d in sorted(score, key=score.get, reverse=True)[:30]:
+        tr, key = ix["docs"][d]
+        p = ix["pos"][tr][key]
+        for size in range(1, max_window + 1):
+            for off in range(size):
+                w = _window(tr, p - off, size)
+                if not w:
+                    continue
+                ref, text = w
+                cov, prec = window_scores(q, text)
+                exact = contains_quote(quote, text)
+                s = (1.0 if exact else cov) + 0.15 * prec - 0.02 * (size - 1)
+                cur = best.get((tr, ref))
+                if not cur or s > cur["score"]:
+                    best[(tr, ref)] = {"reference": ref, "translation": tr, "text": text, "coverage": round(cov, 2),
+                                       "exact": exact, "score": s}
+    out, seen = [], set()
+    for r in sorted(best.values(), key=lambda r: r["score"], reverse=True):
+        if r["reference"] in seen:      # same passage in another translation: keep the best-scoring one only
+            continue
+        seen.add(r["reference"]); out.append(r)
+        if len(out) == k:
+            break
+    return out
