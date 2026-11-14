@@ -21,10 +21,17 @@ from the text that show the rejection; if you cannot quote such words, the stanc
 def _norm(t: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]", " ", (t or "").lower()).split())
 
+# Words that mark a view as someone else's, or as rejected. The model's cue must contain one: it cannot just quote any phrase.
+REJECT_RE = re.compile(
+    r"\b(wrong(ly)?|false(ly)?|untrue|incorrect|mistaken(ly)?|misguided|misleading|error|errors|heresy|heresies|heretical|heretics?|myth|lie|lies|"
+    r"reject(s|ed|ing)?|den(y|ies|ied)|refut\w+|condemn\w*|not true|is not what|says otherwise|say otherwise|teaches otherwise|"
+    r"(some|many|others|people|critics|skeptics|they|those who|certain \w+)\s+(say|says|claim|claims|believe|believes|teach|teaches|think|thinks|argue|argues|insist|insists))\b", re.I)
+
 def clean_stance(cl: dict, section_text: str) -> None:
-    """'refutes' is trusted only when the quoted cue really appears in the text; otherwise the claim counts as asserted."""
+    """'refutes' is trusted only when the quoted cue really appears in the text AND itself contains a rejection or
+    attribution marker; otherwise the claim counts as asserted (the safe direction: it gets judged in full)."""
     cue = _norm(cl.get("stance_cue"))
-    if cl.get("stance") == "refutes" and cue and cue in _norm(section_text):
+    if cl.get("stance") == "refutes" and cue and cue in _norm(section_text) and REJECT_RE.search(cl.get("stance_cue") or ""):
         cl["stance"] = "refutes"
     else:
         cl["stance"] = "asserts"
@@ -153,7 +160,7 @@ def run(submission_id: int) -> dict:
             findings.append({"claim_index": i, "commitment_id": None, "label": "silent", "confidence": 0.0,
                              "evidence": cl["text"], "suggested_fix": None})
     status, reasons, flags = decide_full(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth,
-                                         {c["id"]: c["text"] for c in commitments}, llm_error, heresy_hits)
+                                         {c["id"]: c["text"] for c in commitments}, llm_error, heresy_hits, text)
     for h in heresy_hits:   # recorded alongside the other findings (the verdict flag is built in decide_full)
         findings.append({"claim_index": h["claim_index"], "commitment_id": None, "label": "heresy", "confidence": h["confidence"],
                          "evidence": f"{h['heresy']['name']}: {h['why']}", "suggested_fix": h["heresy"]["orthodox"]})

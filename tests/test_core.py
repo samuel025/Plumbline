@@ -156,3 +156,21 @@ def test_judge_input_tags_rejected_views():
     from app import pipeline
     out = pipeline.numbered([{"kind": "doctrinal", "text": "A", "stance": "refutes"}, {"kind": "doctrinal", "text": "B", "stance": "asserts"}])
     assert "A [the text REJECTS this view]" in out and "B [" not in out
+
+
+def test_refutes_needs_a_rejection_marker_in_the_cue():
+    from app import pipeline
+    text = "Christ is two persons. Mary is the mother of the man Jesus, never the mother of God."
+    flat = {"text": "Mary is the mother of the man Jesus", "stance": "refutes", "stance_cue": "never the mother of God"}
+    pipeline.clean_stance(flat, text)
+    assert flat["stance"] == "asserts"        # the cue is in the text but does not show a rejection
+    text2 = "Some wrongly teach that Jesus was created."
+    real = {"text": "Jesus was created", "stance": "refutes", "stance_cue": "Some wrongly teach"}
+    pipeline.clean_stance(real, text2)
+    assert real["stance"] == "refutes"
+
+
+def test_human_only_authorship_claim_is_flagged():
+    from app.verdict import decide_full
+    st, _, flags = decide_full([], [], [], [], True, True, raw_text="This sermon was written entirely by Pastor James; no one else helped.")
+    assert any(f["kind"] == "authorship" for f in flags) and st == "needs_review"
