@@ -37,7 +37,7 @@ def _flag(kind, severity, title, claim="", detail="", source="", fix=""):
     return {"kind": kind, "severity": severity, "title": title, "claim": claim, "detail": detail, "source": source, "fix": fix}
 
 def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_pastor_authorship=False,
-                commitments=None, llm_error=""):
+                commitments=None, llm_error="", heresy_hits=None):
     commitments = commitments or {}
     ctext = lambda i: claims[i]["text"] if isinstance(i, int) and 0 <= i < len(claims) else ""
     flags = []
@@ -90,6 +90,16 @@ def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_p
             flags.append(_flag("low_confidence", "review", "Low-confidence match", claim,
                 f"Judged aligned, but with confidence {float(f.get('confidence', 0)):.2f}, below the {CONF_MIN} needed to approve.", src,
                 "Have a pastor confirm."))
+    seen_h = set()
+    for h in heresy_hits or []:
+        hz = h["heresy"]
+        if (h["claim_index"], hz["id"]) in seen_h:
+            continue
+        seen_h.add((h["claim_index"], hz["id"]))
+        flags.append(_flag("heresy", "review", f"Resembles a condemned teaching: {hz['name']}", ctext(h["claim_index"]),
+            (h.get("why") or hz["teaches"]) + f" {hz['name']} teaches: {hz['teaches']}",
+            hz["condemned_by"] + (" (contested today)" if hz["authority"] == "contested" else ""),
+            "Orthodox position: " + hz["orthodox"] + " Rewrite to match it, or have a pastor decide."))
     if pii:
         flags.append(_flag("privacy", "review", "Possible personal information", "",
             "The text appears to contain: " + ", ".join(pii) + ".", "Privacy rule", "Remove or anonymise it before publishing."))

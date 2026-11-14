@@ -1,0 +1,297 @@
+[
+ {
+  "id": "arianism",
+  "name": "Arianism",
+  "era": "4th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Council of Nicaea (325) and Constantinople (381)",
+  "teaches": "Jesus is a created being, a first and greatest creature, not eternally God.",
+  "markers": [
+   "there was a time when the Son was not",
+   "Jesus was created by the Father",
+   "Christ is a lesser god or a created being",
+   "the Son is not of the same essence as the Father"
+  ],
+  "orthodox": "The Son is eternally God, of one being with the Father (Nicene Creed)."
+ },
+ {
+  "id": "nestorianism",
+  "name": "Nestorianism",
+  "era": "5th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Council of Ephesus (431)",
+  "teaches": "Christ is two separate persons, one divine and one human, joined only morally; Mary bore only the human Jesus, not God.",
+  "markers": [
+   "Mary is not the mother of God",
+   "the divine Christ and the human Jesus are two persons",
+   "the Word merely dwelt in the man Jesus like a temple"
+  ],
+  "orthodox": "Christ is one person in two natures; Mary is rightly called Theotokos, bearer of God (Ephesus 431)."
+ },
+ {
+  "id": "eutychianism",
+  "name": "Eutychianism (Monophysitism)",
+  "era": "5th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Council of Chalcedon (451)",
+  "teaches": "Christ's humanity was absorbed into or mixed with his divinity, so he had only one blended nature.",
+  "markers": [
+   "Christ had only one nature, the divine",
+   "his humanity was swallowed up by his deity",
+   "Jesus was not truly human in the same way we are"
+  ],
+  "orthodox": "Christ has two natures, fully God and fully man, without confusion or change (Chalcedon 451). Note: some Oriental Orthodox churches confess one united nature (miaphysitism) and reject this label."
+ },
+ {
+  "id": "docetism",
+  "name": "Docetism",
+  "era": "1st-2nd century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected in the New Testament (1 John 4:2-3) and by the early church",
+  "teaches": "Jesus only appeared to be human and to suffer; his body was an illusion or a phantom.",
+  "markers": [
+   "Jesus only seemed to have a body",
+   "Christ did not really suffer or die on the cross",
+   "the divine Christ left Jesus before the crucifixion"
+  ],
+  "orthodox": "The Word became flesh (John 1:14); Jesus truly lived, suffered, died and rose in a real body."
+ },
+ {
+  "id": "modalism",
+  "name": "Modalism (Sabellianism)",
+  "era": "3rd century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned in the 3rd century (Sabellius excommunicated c. 220) and rejected in the Nicene Creed",
+  "teaches": "God is one person who appears in three modes or masks (Father, Son, Spirit) at different times, rather than three persons at once.",
+  "markers": [
+   "God is one person who shows up as Father, then Son, then Spirit",
+   "the Father himself died on the cross",
+   "Father, Son and Spirit are just three names or roles for the same person"
+  ],
+  "orthodox": "One God eternally in three distinct persons, Father, Son and Holy Spirit."
+ },
+ {
+  "id": "adoptionism",
+  "name": "Adoptionism",
+  "era": "2nd-3rd century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Synod of Antioch (268) with Paul of Samosata, and in later councils",
+  "teaches": "Jesus was an ordinary man whom God adopted as Son at his baptism or resurrection; he was not eternally the Son.",
+  "markers": [
+   "Jesus became God's Son at his baptism",
+   "God promoted a good man to divine sonship",
+   "Jesus earned his divinity by his obedience"
+  ],
+  "orthodox": "The Son is eternally God and became man in the incarnation."
+ },
+ {
+  "id": "apollinarianism",
+  "name": "Apollinarianism",
+  "era": "4th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Council of Constantinople (381)",
+  "teaches": "Christ had a human body but the divine Word took the place of a human mind or soul.",
+  "markers": [
+   "Christ had no human mind or soul",
+   "the Logos replaced Jesus's human spirit"
+  ],
+  "orthodox": "Christ assumed a complete human nature: body, soul and mind."
+ },
+ {
+  "id": "monothelitism",
+  "name": "Monothelitism",
+  "era": "7th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Third Council of Constantinople (681)",
+  "teaches": "Christ had only one will, the divine, with no distinct human will.",
+  "markers": [
+   "Christ had only a divine will",
+   "Jesus had no human will of his own"
+  ],
+  "orthodox": "Christ has a divine will and a human will, the human freely submitting to the divine (Gethsemane)."
+ },
+ {
+  "id": "tritheism",
+  "name": "Tritheism",
+  "era": "6th century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected in the Nicene and Athanasian creeds",
+  "teaches": "Father, Son and Spirit are three separate gods, not one God.",
+  "markers": [
+   "there are three gods",
+   "Father, Son and Spirit are three separate beings who cooperate like a committee"
+  ],
+  "orthodox": "There is one God in three persons, one divine essence."
+ },
+ {
+  "id": "socinianism",
+  "name": "Socinianism and Unitarianism",
+  "era": "16th century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected by Reformation confessions and the historic creeds",
+  "teaches": "Denies the Trinity and the deity of Christ; Jesus was a mere man (sometimes divinely favored) and the Spirit is a force, not a person.",
+  "markers": [
+   "Jesus was only a man and not God",
+   "the Holy Spirit is just a force or power, not a person",
+   "the Trinity is a pagan invention"
+  ],
+  "orthodox": "Jesus is God incarnate and the Holy Spirit is a divine person (Nicene Creed)."
+ },
+ {
+  "id": "ebionism",
+  "name": "Ebionism",
+  "era": "1st-2nd century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected by the early church fathers",
+  "teaches": "Jesus was a merely human Messiah, and Gentile believers must keep the Jewish law to be saved.",
+  "markers": [
+   "Jesus was a mere man chosen as Messiah",
+   "you must keep the Law of Moses to be saved",
+   "Paul corrupted the gospel"
+  ],
+  "orthodox": "Jesus is fully God and fully man; salvation is by grace through faith, not by the works of the law (Galatians, Acts 15)."
+ },
+ {
+  "id": "pelagianism",
+  "name": "Pelagianism",
+  "era": "5th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Councils of Carthage (418) and Ephesus (431)",
+  "teaches": "People are born morally unharmed and can obey God and earn salvation by their own effort without grace; there is no inherited sin.",
+  "markers": [
+   "we are born without sin",
+   "we can earn our salvation by good works",
+   "we can obey God perfectly by willpower alone",
+   "original sin does not exist",
+   "God's favor is a reward for how good we are"
+  ],
+  "orthodox": "All are fallen in Adam and are saved by grace alone through faith, which also empowers obedience (Eph 2:8-9; Rom 5)."
+ },
+ {
+  "id": "gnosticism",
+  "name": "Gnosticism",
+  "era": "2nd century",
+  "authority": "ecumenical",
+  "condemned_by": "Refuted by Irenaeus and rejected by the early church",
+  "teaches": "Salvation comes through secret knowledge; matter and the body are evil; the creator God of the Old Testament is a lesser or evil being.",
+  "markers": [
+   "salvation comes through secret knowledge",
+   "the physical world and our bodies are evil prisons",
+   "the God of the Old Testament is a different, lesser god",
+   "only the spiritually enlightened can understand the real gospel"
+  ],
+  "orthodox": "Creation is good; salvation is by faith in the crucified and risen Christ, open to all, not by hidden knowledge."
+ },
+ {
+  "id": "marcionism",
+  "name": "Marcionism",
+  "era": "2nd century",
+  "authority": "ecumenical",
+  "condemned_by": "Marcion excommunicated at Rome (c. 144)",
+  "teaches": "Rejects the Old Testament and its God as inferior or different from the Father of Jesus; keeps only an edited New Testament.",
+  "markers": [
+   "the God of the Old Testament is not the Father of Jesus",
+   "we should throw out the Old Testament",
+   "the Old Testament God is angry and Jesus's God is loving, so they are different gods"
+  ],
+  "orthodox": "The God of Israel is the Father of Jesus Christ; the whole Bible is one story."
+ },
+ {
+  "id": "manichaeism",
+  "name": "Manichaeism",
+  "era": "3rd century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned by the early church (refuted by Augustine) and the Roman Empire",
+  "teaches": "Cosmic dualism: eternal equal forces of good (spirit, light) and evil (matter, darkness) at war.",
+  "markers": [
+   "evil is an eternal power equal to God",
+   "the material world was made by the dark power",
+   "the soul is a spark of light trapped in a body"
+  ],
+  "orthodox": "God alone is eternal and good; evil is a corruption of creation, not an equal power."
+ },
+ {
+  "id": "montanism",
+  "name": "Montanism",
+  "era": "2nd century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected by synods in Asia Minor and by the early church",
+  "teaches": "New prophecy supersedes or equals Scripture; ecstatic prophets are the final authority.",
+  "markers": [
+   "new revelation from our prophet replaces the Bible",
+   "the Spirit is giving us a message that goes beyond and overrides Scripture",
+   "only our prophet speaks the final word of God"
+  ],
+  "orthodox": "Scripture is the final, sufficient rule; any prophecy is tested by it (1 Thess 5:20-21). Note: simply believing prophecy continues today is not Montanism."
+ },
+ {
+  "id": "donatism",
+  "name": "Donatism",
+  "era": "4th century",
+  "authority": "ecumenical",
+  "condemned_by": "Condemned at the Councils of Arles (314) and Carthage (411)",
+  "teaches": "Sacraments and ministry are invalid if the minister is sinful or unworthy; the church must be pure of sinners.",
+  "markers": [
+   "baptism does not count if the pastor is a sinner",
+   "a sinful minister's sacraments are invalid"
+  ],
+  "orthodox": "The validity of the sacraments rests on Christ's promise, not on the minister's worthiness."
+ },
+ {
+  "id": "antinomianism",
+  "name": "Antinomianism",
+  "era": "16th century",
+  "authority": "reformation",
+  "condemned_by": "Rejected in the Lutheran Formula of Concord (1577), Westminster Confession (1646) and the New Testament (Rom 6; Jude 4)",
+  "teaches": "Because we are saved by grace, God's moral law no longer binds believers; obedience and holiness are optional and sin does not matter.",
+  "markers": [
+   "Christians are not required to obey God's commands",
+   "since we are under grace, sin does not matter",
+   "God does not see the sins of believers so repentance is unnecessary",
+   "the law has no place in the Christian life"
+  ],
+  "orthodox": "Grace saves and then transforms; the believer pursues holiness as the fruit of faith (Rom 6:1-2; Titus 2:11-12)."
+ },
+ {
+  "id": "judaizing",
+  "name": "Judaizing (law-keeping as a requirement for salvation)",
+  "era": "1st century",
+  "authority": "ecumenical",
+  "condemned_by": "Rejected at the Council of Jerusalem (Acts 15) and in Galatians",
+  "teaches": "Gentile believers must be circumcised or keep the Mosaic law, in addition to faith in Christ, to be saved.",
+  "markers": [
+   "you must keep the Torah to be saved",
+   "faith in Jesus is not enough without circumcision or the Sabbath law"
+  ],
+  "orthodox": "Salvation is by grace through faith in Christ alone (Gal 2:16; Acts 15)."
+ },
+ {
+  "id": "universalism",
+  "name": "Universal reconciliation (apokatastasis)",
+  "era": "6th century",
+  "authority": "contested",
+  "condemned_by": "Origen's teaching condemned at the Second Council of Constantinople (553); disputed by most traditions today",
+  "teaches": "Every person, and even the devil, will ultimately be saved regardless of faith in Christ; hell is not final.",
+  "markers": [
+   "everyone will be saved in the end",
+   "there is no eternal hell for anyone",
+   "all roads lead to heaven"
+  ],
+  "orthodox": "Scripture teaches final judgment and salvation through Christ alone (John 14:6; Matt 25:46). Traditions differ on how to state this, so a pastor should decide."
+ },
+ {
+  "id": "prosperity",
+  "name": "Prosperity gospel",
+  "era": "20th century",
+  "authority": "modern",
+  "condemned_by": "Denounced in the Lausanne Movement's Cape Town Commitment (2010) and by many denominations",
+  "teaches": "God promises believers health and wealth in this life in return for faith or giving; sickness and poverty signal lack of faith.",
+  "markers": [
+   "if you give to this ministry God will multiply it back to you",
+   "poverty is a curse and faith will make you rich",
+   "if you were truly faithful you would be healed",
+   "God wants every believer to be wealthy"
+  ],
+  "orthodox": "God cares for his people's needs but promises suffering as well as blessing, and gives himself, not riches, as the reward (Phil 4:11-13; John 16:33)."
+ }
+]

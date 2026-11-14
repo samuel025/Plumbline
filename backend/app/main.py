@@ -2,7 +2,7 @@ import html, json
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from . import bible, db, pipeline, commitments as commitments_mod, llm
+from . import bible, db, heresies, pipeline, commitments as commitments_mod, llm
 import os
 
 app = FastAPI(title="Plumbline")
@@ -213,6 +213,11 @@ def health():
     state = "offline" if not (keys or has_anthropic) else ("limited" if (not live or recent_fail) else "online")
     return {"judge": state, "keys": len(keys), "models": llm.GEMINI_MODELS, "key_states": llm.key_states(),
             "last_trail": llm._last_trail}
+
+@app.get("/api/heresies")
+def heresy_catalog():
+    """The global list of historically condemned teachings every check screens for."""
+    return heresies.catalog()
 
 @app.get("/api/audit")
 def audit_log(limit: int = 60):

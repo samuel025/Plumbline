@@ -1,5 +1,5 @@
 import json, re
-from . import bible, db, llm
+from . import bible, db, heresies, llm
 from .verdict import decide_full
 
 EXTRACT_SYS = """You split church-related text into checkable claims. Return ONLY JSON:
@@ -78,6 +78,7 @@ def run(submission_id: int) -> dict:
         rulings = db.rows(c.execute("SELECT * FROM ruling WHERE church_id=?", (church["id"],)))
     text = sub["raw_text"]
     llm_ok, claims, findings, scripture, pastor_auth, llm_error = True, [], [], [], False, ""
+    heresy_hits = []
     sections = split_sections(text)
     seen_claims: set[str] = set()
     try:
@@ -100,6 +101,8 @@ def run(submission_id: int) -> dict:
                     if isinstance(f.get("claim_index"), int) and 0 <= f["claim_index"] < len(batch):
                         f["claim_index"] += start
                         findings.append(f)
+        if claims:   # global rule: applies to every church, whatever its own statement of faith says
+            heresy_hits = heresies.detect(claims)
     except llm.LLMUnavailable as e:
         llm_ok, llm_error = False, str(e)
     # Deterministic Scripture check: LLM-extracted claims plus any reference found in the raw text.
@@ -123,7 +126,10 @@ def run(submission_id: int) -> dict:
             findings.append({"claim_index": i, "commitment_id": None, "label": "silent", "confidence": 0.0,
                              "evidence": cl["text"], "suggested_fix": None})
     status, reasons, flags = decide_full(claims, scripture, findings, detect_pii(text), bool(sub["ai_disclosed"]), llm_ok, pastor_auth,
-                                         {c["id"]: c["text"] for c in commitments}, llm_error)
+                                         {c["id"]: c["text"] for c in commitments}, llm_error, heresy_hits)
+    for h in heresy_hits:   # recorded alongside the other findings (the verdict flag is built in decide_full)
+        findings.append({"claim_index": h["claim_index"], "commitment_id": None, "label": "heresy", "confidence": h["confidence"],
+                         "evidence": f"{h['heresy']['name']}: {h['why']}", "suggested_fix": h["heresy"]["orthodox"]})
     sec_of = {cl["text"]: cl.get("section", 0) for cl in claims}
     for f in flags:
         if f.get("claim") in sec_of:
