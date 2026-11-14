@@ -3,3 +3,5 @@
 __pycache__/
 data/plumbline.db
 removed_queue_items.md
+.neon
+node_modules/
