@@ -213,3 +213,30 @@ def test_unreferenced_non_scripture_is_not_in_bible(monkeypatch):
     r = scripture.verify(None, "God helps those who help themselves.")
     assert r["result"] == "not_in_bible" and r["reference"] is None
     assert scripture.verify(None, "Cleanliness is next to godliness.")["result"] == "not_in_bible"   # no passage even close: no model needed
+
+
+COMMS = [{"id": 1, "text": "Salvation is by grace alone, through faith alone, in Christ alone; works are the fruit, not the root."},
+         {"id": 2, "text": "Baptism is for believers only, by immersion."},
+         {"id": 3, "text": "God is one in essence and three in persons."}]
+
+
+def test_closest_commitments_ranks_by_shared_wording():
+    from app import pipeline
+    near = pipeline.closest_commitments("Our good works do not earn salvation; they grow out of it.", COMMS)
+    assert near[0][0]["id"] == 1
+
+
+def test_second_look_upgrades_only_on_yes_plus_shared_wording(monkeypatch):
+    from app import llm, pipeline
+    claims = [{"kind": "doctrinal", "text": "Our good works do not earn salvation; they grow out of it."}]
+    silent = lambda: [{"claim_index": 0, "commitment_id": None, "label": "silent", "confidence": 0.0, "evidence": "x"}]
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "commitment_id": 1, "same_belief": "yes", "why": "same"}]})
+    out = pipeline.second_look(COMMS, claims, silent())
+    assert out[0]["label"] == "aligned" and out[0]["commitment_id"] == 1
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "commitment_id": 1, "same_belief": "partly", "why": "x"}]})
+    assert pipeline.second_look(COMMS, claims, silent())[0]["label"] == "silent"          # only a clear yes upgrades
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "commitment_id": 2, "same_belief": "yes", "why": "x"}]})
+    assert pipeline.second_look(COMMS, claims, silent())[0]["label"] == "silent"          # yes for a commitment sharing no wording: refused
+    conflict = [{"claim_index": 0, "commitment_id": 1, "label": "conflicts", "confidence": 0.9, "evidence": "x"}]
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "commitment_id": 1, "same_belief": "yes", "why": "x"}]})
+    assert pipeline.second_look(COMMS, claims, conflict)[0]["label"] == "conflicts"       # a conflict is never overturned

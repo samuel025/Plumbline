@@ -1,6 +1,6 @@
-import json, re
+import json, math, re
 from . import bible, db, heresies, llm, scripture as scripture_mod
-from .verdict import decide_full
+from .verdict import decide_full, CONF_MIN
 
 EXTRACT_SYS = """You split church-related text into checkable claims. Return ONLY JSON:
 {"claims":[{"text":str,"kind":"doctrinal|scriptural|pastoral_advice|factual",
@@ -102,6 +102,93 @@ PII_RES = {"phone number": r"\b(?:\+?\d{1,2}[\s.-])?\(?\d{3}\)?[\s.-]\d{3}[\s.-]
 def detect_pii(text: str) -> list[str]:
     return [k for k, rx in PII_RES.items() if re.search(rx, text)]
 
+
+STEADY = True   # hints + second look; the stability harness switches it off to measure the plain judge
+
+def _idf_table(commitments):
+    docs = [set(bible.tokens(c["text"])) for c in commitments]
+    df = {}
+    for d in docs:
+        for t in d:
+            df[t] = df.get(t, 0) + 1
+    n = len(docs)
+    return docs, (lambda t: math.log(1 + n / (1 + df.get(t, 0))))
+
+def closest_commitments(claim_text, commitments, k=3):
+    """Deterministic: commitments ranked by how much of the claim's meaningful wording they share. Returns [(commitment, coverage)]."""
+    docs, idf = _idf_table(commitments)
+    q = set(bible.tokens(claim_text))
+    total = sum(idf(t) for t in q) or 1
+    scored = [(c, sum(idf(t) for t in q & d) / total) for c, d in zip(commitments, docs)]
+    return sorted([x for x in scored if x[1] > 0], key=lambda x: x[1], reverse=True)[:k]
+
+VERIFY_SYS = """You are asked a narrow question about church claims. For each claim you get one to three of the church's own commitments.
+Decide, for the best commitment, whether it states the SAME BELIEF as the claim.
+Return ONLY JSON: {"results":[{"i":int,"commitment_id":int|null,"same_belief":"yes|partly|no","why":str}]}
+- yes: the commitment says the same thing as the claim (a restatement, or a direct consequence of it). Different wording is fine.
+- partly: the commitment covers only part of the claim, or you must stretch it. Sharing a topic or a word is not enough.
+- no: it is a different belief, or you cannot tell. Doubt is never "yes".
+Never judge whether the belief is true; only whether the commitment states it."""
+
+SECOND_LOOK_MIN_COVERAGE = 0.1   # a floor, not a threshold: paraphrases share little wording, so the model's strict 'same belief' answer decides;
+                                 # this only stops a 'yes' for a commitment that shares essentially nothing with the claim
+
+def second_look(commitments, claims, findings):
+    """A claim that would be flagged as silent, contested or low-confidence gets a narrow second question. It is upgraded to
+    'aligned' only if the model answers 'yes' for a commitment that also shares real wording with the claim. 'conflicts' is never touched."""
+    by_id = {c["id"]: c for c in commitments}
+    first = {}
+    for f in findings:
+        if isinstance(f.get("claim_index"), int):
+            first.setdefault(f["claim_index"], f)
+    weak = []
+    for i, cl in enumerate(claims):
+        if cl["kind"] not in ("doctrinal", "pastoral_advice") or cl.get("stance") == "refutes":
+            continue
+        f = first.get(i)
+        if f is None or f["label"] in ("silent", "contested") or (f["label"] == "aligned" and f.get("confidence", 0) < CONF_MIN):
+            near = closest_commitments(cl["text"], commitments)
+            if near:
+                weak.append((i, cl, near))
+    for s0 in range(0, len(weak), JUDGE_BATCH):
+        part = weak[s0:s0 + JUDGE_BATCH]
+        lines = []
+        for j, (_, cl, near) in enumerate(part):
+            lines.append(f"{j}. CLAIM: {cl['text']}\n" + "\n".join(f"   [{c['id']}] {c['text']}" for c, _ in near))
+        for m in llm.call_json(VERIFY_SYS, "\n".join(lines), max_tokens=3000).get("results", []):
+            j, cid = m.get("i"), m.get("commitment_id")
+            if not (isinstance(j, int) and 0 <= j < len(part)) or m.get("same_belief") != "yes":
+                continue
+            i, cl, near = part[j]
+            cov = dict((c["id"], v) for c, v in near).get(cid)
+            if cov is None or cov < SECOND_LOOK_MIN_COVERAGE:
+                continue
+            new = {"claim_index": i, "commitment_id": cid, "label": "aligned", "confidence": 0.9,
+                   "evidence": f"Matches the commitment “{by_id[cid]['text']}” (second check). " + (m.get("why") or ""), "suggested_fix": None}
+            findings[:] = [f for f in findings if f.get("claim_index") != i] + [new]
+    return findings
+
+def judge_claims(church, commitments, rulings, claims):
+    """Judge claims against the church's commitments. With STEADY on, each claim is shown its closest commitments by wording,
+    and anything about to be flagged as silent/contested gets a second, narrower look."""
+    sysmsg = judge_system(church, commitments, rulings)
+    findings = []
+    for start in range(0, len(claims), JUDGE_BATCH):
+        batch = claims[start:start + JUDGE_BATCH]
+        text = numbered(batch)
+        if STEADY:
+            lines = text.split("\n")
+            for i, cl in enumerate(batch):
+                near = closest_commitments(cl["text"], commitments, 2)
+                if near:
+                    lines[i] += "  (closest commitments by wording: " + ", ".join(f"[{c['id']}]" for c, _ in near) + ")"
+            text = "\n".join(lines)
+        for f in llm.call_json(sysmsg, text, max_tokens=6000).get("findings", []):
+            if isinstance(f.get("claim_index"), int) and 0 <= f["claim_index"] < len(batch):
+                f["claim_index"] += start
+                findings.append(f)
+    return second_look(commitments, claims, findings) if STEADY else findings
+
 def run(submission_id: int) -> dict:
     with db.session() as c:
         sub = dict(c.execute("SELECT * FROM submission WHERE id=?", (submission_id,)).fetchone())
@@ -126,14 +213,7 @@ def run(submission_id: int) -> dict:
                 cl["section"] = k
                 claims.append(cl)
         if claims and commitments:
-            sysmsg = judge_system(church, commitments, rulings)
-            for start in range(0, len(claims), JUDGE_BATCH):
-                batch = claims[start:start + JUDGE_BATCH]
-                numbered_batch = numbered(batch)
-                for f in llm.call_json(sysmsg, numbered_batch, max_tokens=6000).get("findings", []):
-                    if isinstance(f.get("claim_index"), int) and 0 <= f["claim_index"] < len(batch):
-                        f["claim_index"] += start
-                        findings.append(f)
+            findings = judge_claims(church, commitments, rulings, claims)
         if claims:   # global rule: applies to every church, whatever its own statement of faith says
             heresy_hits, rejected = heresies.detect(claims)
     except llm.LLMUnavailable as e:
