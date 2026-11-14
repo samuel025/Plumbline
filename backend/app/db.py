@@ -102,9 +102,20 @@ class _PgConn:
         self._c.close()
 
 
+_ready = False
+
+
 def connect():
+    global _ready
     url = database_url()
     if url:
+        if not _ready:  # serverless hosts may skip startup events: create the schema lazily, once per process
+            _ready = True
+            try:
+                init()
+            except Exception:
+                _ready = False
+                raise
         import psycopg
         # prepare_threshold=None: safe behind Neon's pooled (PgBouncer) endpoint.
         conn = psycopg.connect(url, prepare_threshold=None, connect_timeout=15)
