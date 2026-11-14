@@ -1,5 +1,5 @@
 import json, re
-from . import bible, db, heresies, llm
+from . import bible, db, heresies, llm, scripture as scripture_mod
 from .verdict import decide_full
 
 EXTRACT_SYS = """You split church-related text into checkable claims. Return ONLY JSON:
@@ -10,7 +10,8 @@ EXTRACT_SYS = """You split church-related text into checkable claims. Return ONL
 "implies_pastor_authorship":bool}
 Rules: only extract statements that assert a doctrine, quote or cite Scripture, give advice that affects health, safety,
 legal or spiritual standing, or state a checkable fact. Skip pure encouragement, greetings and general exhortation
-("we are never alone", "bring your worries to God"). One claim per statement; copy Scripture references and any quoted verse text exactly as written;
+("we are never alone", "bring your worries to God"). One claim per statement; copy Scripture references and any quoted verse text exactly as written; when the text presents specific wording as being in the Bible
+or as Scripture ("the Bible says...", "as it is written..."), or states what a cited verse says, put that wording in quoted_text even if no reference is given;
 mark risk=crisis for suicide/self-harm, abuse_disclosure for disclosed abuse. Use medical_advice, legal_advice or
 replaces_professional_help ONLY when the text itself gives such advice or tells someone to avoid or replace a doctor,
 counselor or lawyer; advice that encourages seeking professional help is risk "none". Never answer the text; only extract.
@@ -137,17 +138,28 @@ def run(submission_id: int) -> dict:
             heresy_hits, rejected = heresies.detect(claims)
     except llm.LLMUnavailable as e:
         llm_ok, llm_error = False, str(e)
-    # Deterministic Scripture check: LLM-extracted claims plus any reference found in the raw text.
-    seen = set()
+    # Scripture check: every reference, and every quotation presented as Scripture (with or without a reference).
+    # Exact matching and the Bible-wide search are deterministic; paraphrases are judged against the real verse text.
+    items, owners, seen = [], [], set()
     for i, cl in enumerate(claims):
-        if cl.get("reference"):
-            ref = bible.clean_ref(cl["reference"])
-            r = bible.check(ref, cl.get("quoted_text")); r["claim_index"] = i
-            scripture.append(r); seen.add(ref)
+        ref = bible.canonical_ref(bible.clean_ref(cl["reference"])) if cl.get("reference") else None
+        quote = (cl.get("quoted_text") or "").strip() or None
+        if ref and not quote and cl.get("kind") == "scriptural":   # a scriptural claim with a citation says what that verse says
+            quote = re.sub(r"\(?\s*" + re.escape(ref) + r"\s*\)?", "", cl["text"]).strip(" .,;:") or None
+        if ref or quote:
+            items.append((ref, quote)); owners.append(i)
+            if ref:
+                seen.add(ref)
     for ref in bible.find_references(text):
         if ref not in seen:
-            r = bible.check(ref, None); r["claim_index"] = None
-            scripture.append(r)
+            items.append((ref, None)); owners.append(None)
+    if items:
+        try:
+            for owner, r in zip(owners, scripture_mod.verify_many(items)):
+                r["claim_index"] = owner
+                scripture.append(r)
+        except llm.LLMUnavailable as e:
+            llm_ok, llm_error = False, str(e)
     # Scriptural/factual claims are covered by the Scripture check; the statement of faith being silent on them is not a doubt.
     findings = [f for f in findings if not (f.get("label") == "silent" and isinstance(f.get("claim_index"), int)
                 and 0 <= f["claim_index"] < len(claims) and claims[f["claim_index"]].get("kind") in ("scriptural", "factual"))]
@@ -184,8 +196,8 @@ def run(submission_id: int) -> dict:
         for s in scripture:
             cid = claims[s["claim_index"]]["id"] if s["claim_index"] is not None else None
             quoted = claims[s["claim_index"]].get("quoted_text") if s["claim_index"] is not None else None
-            c.execute("INSERT INTO scripture_check(submission_id,claim_id,reference,quoted_text,bible_text,result,translation) VALUES(?,?,?,?,?,?,?)",
-                      (submission_id, cid, s["reference"], quoted, s["bible_text"], s["result"], s.get("translation")))
+            c.execute("INSERT INTO scripture_check(submission_id,claim_id,reference,quoted_text,bible_text,result,translation,note) VALUES(?,?,?,?,?,?,?,?)",
+                      (submission_id, cid, s["reference"], quoted, s["bible_text"], s["result"], s.get("translation"), s.get("note")))
         for f in findings:
             idx = f.get("claim_index")
             cid = claims[idx]["id"] if isinstance(idx, int) and 0 <= idx < len(claims) else None

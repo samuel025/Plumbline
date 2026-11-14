@@ -109,8 +109,10 @@ def verify_many(items: list[tuple[str | None, str | None]]) -> list[dict]:
             if not ref:
                 res["note"] = f"Matches {match[0]}; the reference was left out. " + (why or "")
         elif v == "distorted":
-            res = {"reference": ref or r0, "bible_text": t0, "result": "misquote" if ref else "not_in_bible", "translation": tr0,
-                   "note": why or "The quotation does not say what the passage says."}
+            res = {"reference": ref, "bible_text": t0 if ref else None, "result": "misquote" if ref else "not_in_bible",
+                   "translation": tr0 if ref else None, "note": why or "The quotation does not say what the passage says."}
+            if not ref:
+                res["note"] += f" (Closest passage: {r0}.)"
         else:
             res = {"reference": ref or r0, "bible_text": t0, "result": "unverified", "translation": tr0,
                    "note": why or "Could not confirm that this wording matches the passage."}

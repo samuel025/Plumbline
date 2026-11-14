@@ -46,6 +46,7 @@ MIGRATIONS = [
     ("verdict", "flags TEXT"),
     ("scripture_check", "translation TEXT"),
     ("claim", "section INT DEFAULT 0"),
+    ("scripture_check", "note TEXT"),
 ]
 _PG = dict(pk="SERIAL PRIMARY KEY", now="(to_char(now() AT TIME ZONE 'utc','YYYY-MM-DD HH24:MI:SS'))")
 _LITE = dict(pk="INTEGER PRIMARY KEY", now="CURRENT_TIMESTAMP")

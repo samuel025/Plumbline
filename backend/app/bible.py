@@ -46,6 +46,13 @@ def clean_ref(ref: str) -> str:
         parts = parts[1:]
     return " ".join(parts)
 
+def canonical_ref(ref: str) -> str:
+    """'Psalm 23:1' -> 'Psalms 23:1' so the same verse is never listed twice."""
+    m = REF_RE.search(ref or "")
+    if not m:
+        return ref
+    return f"{normalize_book(m.group(1))} {m.group(2)}:{m.group(3)}" + (f"-{m.group(4)}" if m.group(4) else "")
+
 def find_references(text: str) -> list[str]:
     """Known books plus any 'Capitalized N:N' pattern, so invented books (e.g. 'Hezekiah 4:2') are caught."""
     known = [f"{normalize_book(m.group(1))} {m.group(2)}:{m.group(3)}" + (f"-{m.group(4)}" if m.group(4) else "")

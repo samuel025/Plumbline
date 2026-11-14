@@ -73,8 +73,18 @@ def decide_full(claims, scripture, findings, pii, ai_disclosed, llm_ok, claims_p
                 "Bible text (KJV, WEB, ASV, BSB)", "Check the reference, or remove the quotation."))
         elif s["result"] == "misquote":
             flags.append(_flag("scripture", "review", "Quote does not match the verse", claim,
-                f"The quoted words do not match {s['reference']}, which reads: “{s.get('bible_text') or ''}”",
-                "Bible text (KJV, WEB, ASV, BSB)", "Quote the verse accurately, or paraphrase it."))
+                s.get("note") or f"The quoted words do not match {s['reference']}, which reads: “{s.get('bible_text') or ''}”",
+                f"Bible text ({s.get('translation') or 'KJV, WEB, ASV, BSB'}): “{s.get('bible_text') or ''}”" if s.get("bible_text") else "Bible text (KJV, WEB, ASV, BSB)",
+                "Quote the verse accurately, or paraphrase it faithfully."))
+        elif s["result"] == "not_in_bible":
+            flags.append(_flag("scripture", "review", "Presented as Scripture, but not in the Bible", claim,
+                s.get("note") or "Nothing in the Bible says this.", "Bible-wide search (KJV, WEB, ASV, BSB)",
+                "Remove it, or say plainly that it is a common saying and not Scripture."))
+        elif s["result"] == "unverified":
+            flags.append(_flag("scripture", "review", "Could not confirm this against Scripture", claim,
+                s.get("note") or "Plumbline could not tell whether this matches the passage.",
+                f"Closest passage: {s['reference']}" + (f" ({s.get('translation')})" if s.get("translation") else ""),
+                "A pastor should compare it with the passage."))
     for f in findings:
         claim, label = ctext(f.get("claim_index")), f["label"]
         com = commitments.get(f.get("commitment_id"))

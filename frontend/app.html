@@ -340,7 +340,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LBL={approved:"Approved",needs_review:"Needs pastor review",blocked:"Blocked",rejected:"Rejected",edited:"Approved with edits"};
 const KIND={doctrinal:"Doctrine",scriptural:"Scripture",pastoral_advice:"Pastoral advice",factual:"Fact"};
-const SCR={exact:["ok","Verse verified"],paraphrase:["ok","Faithful paraphrase"],misquote:["bad","Does not match the verse"],not_found:["bad","Reference not found"]};
+const SCR={exact:["ok","Verse verified"],paraphrase:["ok","Faithful paraphrase"],misquote:["bad","Does not match the verse"],not_found:["bad","Reference not found"],not_in_bible:["bad","Not in the Bible"],unverified:["warn","Could not confirm"]};
 const FIND={aligned:["ok","Aligned"],conflicts:["bad","Conflicts"],silent:["warn","Statement of faith is silent"],contested:["warn","Contested"]};
 const RISK={crisis:"Crisis language",abuse_disclosure:"Abuse disclosure",medical_advice:"Medical advice",legal_advice:"Legal advice",replaces_professional_help:"Replaces professional help"};
 const COL={approved:"var(--ok)",needs_review:"var(--warn)",blocked:"var(--bad)"};
@@ -412,7 +412,7 @@ function resultHTML(d,{withDecision=false,onCheck=false}={}){
     ${f.fix?`<div class="fix"><b>What to do:</b> ${esc(f.fix)}</div>`:""}
     ${f.kind==="model_unavailable"?`<div style="margin-top:10px"><button class="btn sm" data-act="recheck" data-id="${s.id}" data-decided="${v.final_status?1:0}">Check again</button></div>`:""}</div></details>`;
   const okLines=cl=>[
-    ...cl.scripture.filter(x=>x.result==="exact"||x.result==="paraphrase").map(x=>`<div class="okline"><span class="tick">✓</span><div><b>${esc(x.reference)}</b> ${x.result==="paraphrase"?"is a faithful paraphrase":"checks out"}${x.translation?` <span class="mut">(${esc(x.translation)})</span>`:""}${x.bible_text?`<div class="verse">${esc(x.bible_text)}</div>`:""}</div></div>`),
+    ...cl.scripture.filter(x=>x.result==="exact"||x.result==="paraphrase").map(x=>`<div class="okline"><span class="tick">✓</span><div><b>${esc(x.reference)}</b> ${x.result==="paraphrase"?"is a faithful paraphrase":"checks out"}${x.translation?` <span class="mut">(${esc(x.translation)})</span>`:""}${x.bible_text?`<div class="verse">${esc(x.bible_text)}</div>`:""}${x.note?`<div class="mut">${esc(x.note)}</div>`:""}</div></div>`),
     ...(cl.kind==="scriptural"||cl.kind==="factual"?[]:cl.findings.filter(f=>f.label==="aligned"&&(f.confidence||0)>=0.75).map(f=>`<div class="okline"><span class="tick">✓</span><div>Matches your statement of faith${f.commitment_text?`<div class="verse">“${esc(f.commitment_text)}”</div>`:""}</div></div>`))];
   const items=d.claims.map(cl=>({cl,fl:byClaim(cl),ok:okLines(cl),sec:cl.section||0}));
   const flaggedHTML=its=>its.filter(i=>i.fl.length).map(i=>`<div class="fclaim ${i.fl.some(f=>f.severity==="block")?"blk":"att"}"><div class="ch"><p class="q">“${esc(i.cl.text)}”</p><span class="chip">${KIND[i.cl.kind]||esc(i.cl.kind)}</span></div>${i.fl.map(flagHTML).join("")}</div>`).join("");

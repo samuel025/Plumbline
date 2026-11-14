@@ -174,3 +174,42 @@ def test_human_only_authorship_claim_is_flagged():
     from app.verdict import decide_full
     st, _, flags = decide_full([], [], [], [], True, True, raw_text="This sermon was written entirely by Pastor James; no one else helped.")
     assert any(f["kind"] == "authorship" for f in flags) and st == "needs_review"
+
+
+def test_scripture_exact_notfound_and_fragments():
+    from app import bible, scripture
+    kjv = bible.lookup("John 3:16", "KJV")
+    assert scripture.verify("John 3:16", kjv)["result"] == "exact"
+    assert scripture.verify("Hezekiah 4:2", "anything")["result"] == "not_found"
+    assert scripture.verify("John 3:16", None)["result"] == "exact"
+    # a real quote with the reference left out is found and credited to where it is
+    r = scripture.verify(None, "for God so loved the world, that he gave his only begotten Son")
+    assert r["result"] == "exact" and r["reference"].startswith("John 3:16")
+    # right words, wrong reference: flagged, and says where the words really are
+    r = scripture.verify("Romans 8:16", kjv)
+    assert r["result"] == "misquote" and "John 3:16" in r["note"]
+    # a fragment that begins mid-phrase is not 'exact' (it may drop a qualifier like 'the love of')
+    assert not bible.contains_quote("money is the root of all evil", bible.lookup("1 Timothy 6:10", "KJV"))
+    assert bible.contains_quote("the Lord is my shepherd; I shall not want", bible.lookup("Psalms 23:1", "KJV"))
+
+
+def test_scripture_paraphrase_goes_through_the_meaning_check(monkeypatch):
+    from app import llm, scripture
+    seen = {}
+    def fake(system, user, max_tokens=0):
+        seen["user"] = user
+        return {"results": [{"i": 0, "verdict": "distorted", "ref": "1 Timothy 6:10", "why": "It drops 'the love of'."}]}
+    monkeypatch.setattr(llm, "call_json", fake)
+    r = scripture.verify("1 Timothy 6:10", "Money is the root of all evil.")
+    assert r["result"] == "misquote" and "love of" in r["note"]
+    assert "love of money" in seen["user"]          # the model is shown the real verse text, not asked to recall it
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": []})
+    assert scripture.verify("1 Timothy 6:10", "Money is the root of all evil.")["result"] == "unverified"   # no answer is never 'faithful'
+
+
+def test_unreferenced_non_scripture_is_not_in_bible(monkeypatch):
+    from app import llm, scripture
+    monkeypatch.setattr(llm, "call_json", lambda *a, **k: {"results": [{"i": 0, "verdict": "distorted", "ref": None, "why": "A saying, not Scripture."}]})
+    r = scripture.verify(None, "God helps those who help themselves.")
+    assert r["result"] == "not_in_bible" and r["reference"] is None
+    assert scripture.verify(None, "Cleanliness is next to godliness.")["result"] == "not_in_bible"   # no passage even close: no model needed
