@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Plumbline — a review layer for church AI</title>
-<meta name="description" content="Plumbline checks AI-written church content against your own statement of faith and against Scripture, then tells a pastor what is safe to use and why.">
+<meta name="description" content="Plumbline checks AI-written church content against your own statement of faith, against Scripture and against historic heresies, then tells a pastor what is safe to use and why.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -149,7 +149,7 @@ h3{font-weight:500;font-size:18px;letter-spacing:-.02em;margin:0 0 8px;line-heig
 
 /* bento */
 .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
-.bento .b1{grid-column:span 3}.bento .b2{grid-column:span 3}.bento .b3{grid-column:span 2}.bento .b4{grid-column:span 2}.bento .b5{grid-column:span 2}
+.bento .b1{grid-column:span 3}.bento .b2{grid-column:span 3}.bento .b3,.bento .b4,.bento .b5,.bento .b6{grid-column:span 3}
 @media(max-width:900px){.bento{grid-template-columns:1fr 1fr}.bento>*{grid-column:span 2!important}}
 @media(max-width:640px){.bento{grid-template-columns:1fr}.bento>*{grid-column:auto!important}}
 .bento .card{display:flex;flex-direction:column;overflow:hidden;min-height:290px}
@@ -246,7 +246,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;
   <div class="wrap">
     <div class="pill"><b>New</b>A review layer for church AI</div>
     <h1 id="h1">Would your pastor publish this?</h1>
-    <p class="lede">Plumbline checks AI-written content against your church's own statement of faith and against Scripture, then tells a pastor what is safe to use, what needs a human look, and why.</p>
+    <p class="lede">Plumbline checks AI-written content against your church's own statement of faith, against Scripture and against teachings the church has long condemned, then tells a pastor what is safe to use, what needs a human look, and why.</p>
     <div class="ctas"><a class="btn lg" href="/app">Open the app <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn lg ghost" href="#demo">Watch it check</a></div>
   </div>
   <div class="scene" aria-hidden="true">
@@ -315,13 +315,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;
 
 <!-- WHAT IT CHECKS -->
 <section id="checks" style="padding-top:20px"><div class="wrap">
-  <div class="rv" style="margin-bottom:48px"><div class="eyebrow">What it checks</div><h2 class="wide">Three checks on every claim.</h2>
-    <p class="copy">The verdict engine approves only when all three come back clean.</p></div>
+  <div class="rv" style="margin-bottom:48px"><div class="eyebrow">What it checks</div><h2 class="wide">Six checks on every claim.</h2>
+    <p class="copy">The verdict engine approves only when every check comes back clean.</p></div>
   <div class="bento">
     <div class="card b1 rv"><svg class="ic" viewBox="0 0 24 24"><path d="M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M9 9h5M9 13h5"/></svg><h3>Scripture check</h3><p>Every reference is looked up in a public-domain Bible text. Quotes are marked exact, faithful paraphrase, misquote or not found. Invented books are caught too.</p>
       <div class="vis vref"><div class="vrow"><b>John 3:16</b><span class="t badge approved">Verse verified</span></div><div class="vrow"><b>Romans 8:28</b><span class="t badge needs_review">Does not match</span></div><div class="vrow"><b>Hezekiah 4:2</b><span class="t badge blocked">Not found</span></div></div></div>
     <div class="card b2 rv d1"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v18M5 7l7-4 7 4M5 7l-2 6a3 3 0 006 0zM19 7l-2 6a3 3 0 006 0z"/></svg><h3>Doctrine judge</h3><p>Each claim is weighed against your own approved commitments and your pastors' past rulings: aligned, conflicts, silent or contested. It never decides which theology is right.</p>
       <div class="vis"><div class="cm">“Salvation is by grace alone, through faith alone, in Christ alone; works are the fruit, not the root.”</div><div class="meter"><i style="width:94%"></i></div><div style="display:flex;justify-content:space-between;font-size:13.5px;color:var(--ash)"><span>Conflicts with this commitment</span><b style="color:var(--bad);font-weight:500">0.95 confidence</b></div></div></div>
+    <div class="card b6 rv d1"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><h3>Historic heresies</h3><p>Every church is screened against 21 teachings the church has long condemned, whatever its own statement of faith says. Each match names who condemned it and what the orthodox position is. A sermon that names a heresy only to refute it is left alone.</p>
+      <div class="vis chips"><span class="chip w">Arianism</span><span class="chip w">Nestorianism</span><span class="chip w">Antinomianism</span><span class="chip w">Pelagianism</span><span class="chip w">Docetism</span><span class="chip w">Gnosticism</span></div></div>
     <div class="card b3 rv"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg><h3>Risk checks</h3><p>Crisis language, abuse disclosures, risky advice and replacing professional help.</p>
       <div class="vis chips"><span class="chip r">Crisis language</span><span class="chip r">Abuse disclosure</span><span class="chip w">Medical advice</span><span class="chip w">Legal advice</span></div></div>
     <div class="card b4 rv d1"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><h3>Privacy</h3><p>Phone numbers and emails in content are flagged before they are published.</p>
